@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+/*
+  Palette from the spec. @theme turns each token into a CSS variable
+  and a Tailwind colour at the same time (bg-ink, text-gold, border-mist ...).
+*/
+@theme {
+  --color-ink: #0f1c33; /* stage background */
+  --color-navy: #1b2e50; /* headings and lines */
+  --color-gold: #c9a227; /* accent, data packet, active step */
+  --color-panel: #ffffff; /* lab panels */
+  --color-mist: #e7eaf0; /* soft grey on lab panels */
+
+  --color-emotion-neutral: #8a94a6;
+  --color-emotion-happiness: #e3b23c;
+  --color-emotion-sadness: #4f7cac;
+  --color-emotion-anger: #c2453d;
+  --color-emotion-fear: #7a5c99;
+
+  /* Supporting tones derived from the palette */
+  --color-ink-raised: #16284a; /* raised surfaces on the dark stage */
+  --color-line: #2a3d63; /* hairlines on the dark stage */
+  --color-chalk: #e9edf5; /* main text on the dark stage (14:1 on ink) */
+  --color-haze: #9aa7bf; /* secondary text on the dark stage (7:1 on ink) */
+  --color-slate: #5b6780; /* secondary text on white panels (5.7:1) */
+  --color-gold-soft: #f3e7bf; /* light gold tint for highlights on panels */
+  --color-paper: #f7f3ea; /* the sheet of paper the sentence is written on */
+  --color-alert: #f2a097; /* error text on the dark stage (8:1 on ink) */
+}
+
+/* Only make the robot sticky when the screen is tall enough to leave room for the steps. */
+@custom-variant tall (@media (min-height: 640px));
+
+/* next/font sets these variables on <html>; "inline" makes the utilities use them directly. */
+@theme inline {
+  --font-sans: var(--font-hind-madurai), system-ui, sans-serif;
+  --font-display: var(--font-anek-tamil), system-ui, sans-serif;
+}
+
+:root {
+  /* Gold focus ring on the dark stage; light panels switch it to navy for contrast. */
+  --focus-ring: var(--color-gold);
+  color-scheme: dark;
+  --header-h: 3.5rem;
+  --controls-h: 4.25rem;
+  --sticky-robot-h: clamp(200px, 34vh, 380px);
+}
+
+/* The presenter bar wraps onto two rows on phones. */
+@media (max-width: 767px) {
+  :root {
+    --controls-h: 6.5rem;
+  }
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-mist) transparent;
+}
+
+html {
+  background: var(--color-ink);
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-chalk);
+  font-family: var(--font-sans);
+}
+
+/* All Tamil text uses Anek Tamil, with room for tall vowel signs. */
+:lang(ta) {
+  font-family: var(--font-display);
+  line-height: 1.65;
+}
+
+.surface-light {
+  --focus-ring: var(--color-navy);
+  color-scheme: light;
+  background: var(--color-panel);
+  color: var(--color-navy);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "text": "எனக்கு பல்கலைக்கழகத்தில் இடம் கிடைத்தது, மிகவும் சந்தோசமாக இருக்கிறது!",
+  "speakerId": "SPK02",
+  "emotionVector": { "neutral": 0.07, "happiness": 0.82, "sadness": 0.04, "anger": 0.03, "fear": 0.04 },
+  "predictedEmotion": "happiness"
+}
