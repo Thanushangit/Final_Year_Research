@@ -2,7 +2,7 @@
 
 `[x]` = done, `[ ]` = not done yet. Claude ticks each item as soon as it is finished.
 
-**Now:** Phase 6. Arm angles for reach, grip, read and speak are worked out; now writing the motion code (choreography first).
+**Now:** Phase 6 is finished. Waiting for you to check it in the browser and reply `continue` (next: Phase 7, polish and README).
 
 ---
 
@@ -70,11 +70,12 @@
 - [x] STOP: you check it in the browser and reply `continue`
 
 ### Phase 6 — Robot movement, lip-sync, natural motion
-- [ ] Choreography: look down, reach, grip, lift, read, look up, speak, put paper back
-- [ ] Lip-sync from the playing audio (jaw, round/wide lips, closed in pauses)
-- [ ] Idle life: blinking, breathing, eye movements, follows the mouse, weight shifts
-- [ ] Emotion poses + chest light colour; Play voice again makes the robot speak again
-- [ ] Build + lint + screenshots, then STOP
+- [x] Choreography: look down, reach, grip, lift, read, look up, speak, put paper back
+- [x] Lip-sync from the playing audio (jaw, round/wide lips, closed in pauses)
+- [x] Idle life: blinking, breathing, eye movements, follows the mouse, weight shifts
+- [x] Emotion poses + chest light colour; Play voice again makes the robot speak again
+- [x] Build + lint + screenshots (each scene in slow motion, reading eyes, lip-sync in a full run, five emotion faces, Play voice again, Replay, mouse follow, reduced motion, 1440 and 375 px)
+- [x] STOP: you check it in the browser and reply `continue`
 
 ### Phase 7 — Polish and handover
 - [ ] Loading, empty and error states with clear messages

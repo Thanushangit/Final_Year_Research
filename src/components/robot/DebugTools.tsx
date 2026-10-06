@@ -1,21 +1,12 @@
 "use client";
 
-// ?debug=1 only: orbit the camera, jump to fixed angles, see the frame rate, play each scene of the
-// choreography by hand, and freeze the joints in test poses (blink, mouth shapes, fingers).
+// ?debug=1 only: the debug flag, the test poses, and the orbit camera with fixed angles and an FPS
+// readout. The buttons that control them are in DebugPanel.tsx.
 import { OrbitControls } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useSyncExternalStore, type ComponentRef, type RefObject } from "react";
-import { cn } from "@/lib/cn";
-import type { SceneName } from "./choreography";
 import { clonePose, type RobotPose } from "./pose";
 import { DEBUG_VIEWS, REST_POSE, type CameraView } from "./robotConstants";
-
-const SCENES: Array<{ scene: SceneName; label: string }> = [
-  { scene: "read", label: "Pick up and read" },
-  { scene: "speak", label: "Look up and speak" },
-  { scene: "putBack", label: "Put paper back" },
-  { scene: "rest", label: "Rest" },
-];
 
 const subscribe = () => () => {};
 
@@ -96,62 +87,4 @@ export function DebugCamera({ view, fpsRef }: { view: CameraView; fpsRef: RefObj
   });
 
   return <OrbitControls ref={controlsRef} makeDefault enableDamping />;
-}
-
-interface DebugPanelProps {
-  view: CameraView;
-  onView: (view: CameraView) => void;
-  tests: ReadonlySet<PoseTest>;
-  onToggle: (test: PoseTest) => void;
-  onScene: (scene: SceneName) => void;
-  fpsRef: RefObject<HTMLSpanElement | null>;
-}
-
-const chip = "rounded-full border px-2 py-0.5 text-[11px] leading-5";
-
-/** The buttons over the 3D view in debug mode. */
-export function DebugPanel({ view, onView, tests, onToggle, onScene, fpsRef }: DebugPanelProps) {
-  return (
-    <div className="absolute inset-x-2 top-2 z-10 flex flex-col gap-1.5 rounded-md bg-ink/85 p-2 text-chalk">
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="mr-1 text-[11px] text-haze">Debug view</span>
-        {(Object.keys(DEBUG_VIEWS) as CameraView[]).map((name) => (
-          <button
-            key={name}
-            type="button"
-            aria-pressed={view === name}
-            onClick={() => onView(name)}
-            className={cn(chip, view === name ? "border-gold bg-gold text-ink" : "border-line")}
-          >
-            {DEBUG_VIEWS[name].label}
-          </button>
-        ))}
-        <span ref={fpsRef} className="ml-auto text-[11px] text-haze tabular-nums">
-          … fps
-        </span>
-      </div>
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="mr-1 text-[11px] text-haze">Act</span>
-        {SCENES.map(({ scene, label }) => (
-          <button key={scene} type="button" onClick={() => onScene(scene)} className={cn(chip, "border-line")}>
-            {label}
-          </button>
-        ))}
-      </div>
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="mr-1 text-[11px] text-haze">Freeze</span>
-        {(Object.keys(POSE_TESTS) as PoseTest[]).map((test) => (
-          <button
-            key={test}
-            type="button"
-            aria-pressed={tests.has(test)}
-            onClick={() => onToggle(test)}
-            className={cn(chip, tests.has(test) ? "border-gold bg-gold text-ink" : "border-line")}
-          >
-            {POSE_TESTS[test].label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
 }

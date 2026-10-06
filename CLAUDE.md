@@ -8,11 +8,13 @@ Full brief: `claude-code-prompt-tamil-tts-dashboard.md`. Progress checklist: `PR
 - **Done and approved by the user:** Phase 0 (setup), Phase 1 (contracts, mocks, API routes, store),
   Phase 2 (input screen, stage layout, presenter controls, packet animation, placeholder robot, audio engine),
   Phase 3 (IndicBERT panel: 10 step visuals, Heatmap, ProbabilityBars, BarStrip, "What the model does" notes).
-- **Done and approved:** Phase 4 (VITS panel: 8 step visuals, wavesurfer AudioPlayer, Download voice).
-- **Done, waiting for the user's `continue`:** Phase 5 (procedural robot, desk, lamp, paper, `?debug=1`).
-- **Next:** Phase 6, movement, lip-sync and idle life. See "Plan for the remaining phases" below.
-- Last check (Phase 5): `npm run build` and `npx eslint . --max-warnings=0` both clean. Screenshots from the
-  debug angles and joint tests, the stage at 1440 and 375 px, reduced motion.
+- **Done and approved:** Phase 4 (VITS panel: 8 step visuals, wavesurfer AudioPlayer, Download voice),
+  Phase 5 (procedural robot, desk, lamp, paper, `?debug=1`).
+- **Done, waiting for the user's `continue`:** Phase 6 (choreography, lip-sync, idle life, emotion poses).
+- **Next:** Phase 7, polish and handover. See "Plan for the remaining phases" below.
+- Last check (Phase 6): `npm run build` and `npx eslint . --max-warnings=0` both clean. Browser checks: each
+  scene in slow motion (three-quarter + front), reading eyes (face close-up), lip-sync during a full run, the
+  five emotion faces, Play voice again + Replay, mouse follow (and off with reduced motion), 1440 and 375 px.
 
 ## What this is
 A demo dashboard for the undergraduate project **"Emotion-Aware Sri Lankan Tamil Text-to-Speech Generation Using
@@ -136,9 +138,9 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
   - `robotConstants.ts`: all sizes, colours, `LIMITS`, `JOINT` names + `armJoint(side)`, `REST_POSE`, `CAMERA`,
     `DEBUG_VIEWS` (front, threeQuarter, side, face, paper). Units are metres; the robot faces +z, its left is +x.
   - `pose.ts`: `RobotPose` (spine, neck, head, gaze, lids 0 open–1 closed, brows raise/tilt, mouth open/smile/wide/
-    round/press, armL/armR {shoulder, elbow, wrist, curl, thumb}, breath), `collectRig()` finds joints by name once
-    (and calls `updateMorphTargets()` on the lips), `applyPose()` writes a pose each frame (right arm mirrored).
-    **Phase 6 layers build a pose and pass it to `<Robot pose>`** (or call `applyPose` from one `useFrame`).
+    round/press, armL/armR {shoulder, elbow, wrist, curl, thumb}, breath, shrug), `collectRig()` finds joints by name
+    once (and calls `updateMorphTargets()` on the lips; arm rigs include the `grip` socket), `applyPose()` writes a
+    pose each frame (right arm mirrored), `applyEyes()` re-writes eyes and lids after the look-at.
   - `Robot.tsx` assembles waist → spine → torso + chest (breath lifts it) → neck → head, and two arms; chest panel
     glows in the emotion colour × voice loudness (`glowChest`). Parts in `parts/`: `Head` (skull, visor, ears,
     antenna, brows), `Eye` (eyeball group turns; separate upper/lower lid shells), `Mouth` (upper lip on the face,
@@ -146,10 +148,48 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
     `Arm`, `Hand` (palm, 3 two-part fingers, two-part thumb, empty `grip` group for the paper).
   - `lipGeometry.ts`: tube lips with relative morph targets [smile, wide, round, press] (negative smile = frown).
   - `materials.tsx`: shared materials via context. `Desk.tsx` (desk, pad, books, lamp spotlight aimed at the paper,
-    warm point light for the face). `Paper.tsx`: group named `paper`; Tamil drawn on a 2D canvas in Anek Tamil
-    (`--font-anek-tamil` on `<html>`, after `document.fonts.load`), redrawn live from `input`.
+    warm point light for the face). `Paper.tsx`: group named `paper` (ref passed in); Tamil drawn on a 2D canvas in
+    Anek Tamil (`--font-anek-tamil` on `<html>`, after `document.fonts.load`), redrawn live from `input`. The text
+    **faces the robot** (`PAPER_ON_DESK` turn + π), so from the camera it is upside down on the desk; the back
+    shows the words faint and mirrored. `onLayout` reports each line's position (`LineSpot`, metres on the page).
   - React 19 lint: mutate three objects only through refs or helper functions (`glowChest`), not values from
-    `useMemo`/`useState` inside the component body.
+    `useMemo`/`useState` inside the component body. Motion layers are classes held with `useState(() => new X())`;
+    calling their methods inside `useFrame` passes lint.
+- **Robot motion (Phase 6)**, all added together in **one `useFrame`** (`Robot.tsx` → `motionMixer.ts`):
+  GSAP channels → `emotionPose` offsets → idle → lip-sync → fear tremble → `applyPose` → paper follows the hand →
+  eyes aim (look-at) → lids follow the gaze + blink → `applyEyes`. A `testPose` (debug Freeze buttons) replaces it all.
+  - `poseMath.ts`: `PartialPose` (deep partial, vectors whole), `addOffset`, and "channels": a pose flattened to
+    `{"head.0": …, "armR.elbow": …}` so GSAP can tween it. **GSAP adds a hidden `_gsap` key to tweened objects**, so
+    `channelWriter` uses a fixed path list; never loop over a channel object's keys.
+  - `choreography.ts`: `Choreographer` builds one GSAP timeline per scene: `rest`, `read` (pick up if needed, then
+    a repeating reading loop), `speak` (pick up quickly if needed; lower the page, eyes then head to the camera,
+    breath in, `onReady`, left hand lets go to gesture), `putBack`. Every scene starts from the current values, so
+    scenes interrupt each other smoothly. Besides joints it tweens `cues`: `attach` (paper desk 0 → hand 1),
+    `lookPaper` + `readU/readV` (reading spot on the page), `lookCamera`, `follow` (mouse), `gesture` (free left hand).
+    Parts start one after another (`MOTION.lead`: eyes 0, head 0.15 s, spine 0.24 s; shoulder → elbow → wrist → hand),
+    never linear easing; wrist uses `back.out` for follow-through. timeScale = presenter speed × emotion tempo.
+  - `useRobotTimeline.ts`: follows the store (stage → scene: understanding/handoff/speaking = read, playing = speak,
+    done = putBack, idle/error = rest; `runId` restarts read, `speakRequest` restarts speak). `onReady` calls
+    `markRobotReady(request)`. ?debug=1 "Act" buttons play scenes by hand (`DebugScene`).
+  - Key poses in `robotConstants.ts` (`KEY_POSES`, `PAPER_HOLD`, `CHOREO`, `READING`, `LIP_SYNC`, `IDLE`). Arm angles
+    came from a small inverse-kinematics search in Node (the joint chain rebuilt with three.js groups, pattern
+    search over the 7 arm angles so `grip × PAPER_HOLD` matches a target paper transform). If body sizes change,
+    redo that search; the hand meets the desk paper within 5 mm and both hands meet the reading page within 3 mm.
+  - `useLipSync.ts`: shared analyser RMS → jaw (attack 40 ms, release 90 ms), adaptive peak + gate (lips fully closed
+    in pauses), high/low band balance vs its running average → wide/round, press on onsets after silence, jitter;
+    accents (rising past 72% of the recent peak) kick a nod spring, a hand-beat spring and a brow lift. `level` also
+    drives the chest glow.
+  - `useIdleMotion.ts`: blinks (80 ms close, 150 ms open, 2–6 s, sometimes double), breathing 0.25 Hz, micro-saccades,
+    weight shifts, mouse follow at rest (window `pointermove`, the screen treated as a window between robot and
+    viewer; looks back after 4 s idle). Reduced motion turns off saccades, weight shifts and mouse follow.
+  - `emotionPose.ts`: per-emotion offsets + motion settings (tempo, gesture, sharpness, bounce, tremble), blended over
+    600 ms and weighted by the **full probability vector**. Face and chest colour show the emotion only from IndicBERT
+    step 9 ("Predicted emotion", `EMOTION_REVEAL_STEP`) onwards; Replay hides it again until then.
+  - The voice waits for the robot: store `robotOnline` + `robotReadyFor`; the director plays when
+    `robotReadyFor === speakRequest` (safety net `ROBOT_WAIT_MAX_MS`; without WebGL `ROBOT_INTRO_MS`). "Play voice"
+    while speaking stops the voice until the robot is ready again. The voice packet fades into the robot on arrival.
+  - `DebugPanel.tsx`: Hide / Show debug tools (hidden, not unmounted), camera views, FPS, Act (scenes), Slow motion
+    (`gsap.globalTimeline.timeScale(0.25)`), Freeze (pose tests from `DebugTools.tsx`).
 - **Audio** `lib/audio/audioEngine.ts`: `unlock()` inside the Read aloud click, `load(base64Wav)`, `playFromStart()`
   (false if blocked → `voiceBlocked`), `stop()`, getters `media`, `analyserNode` (fftSize 1024), `voiceSource`.
 - **Mocks** `lib/mock/`: `tamilText` (graphemes, `groupIntoLetters`, `normalizeTamilText` incl. Tamil number words,
@@ -172,8 +212,13 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
   `flow.mjs` drives a full run, `replay.mjs`, `bert.mjs` walks the IndicBERT steps with hovers, `softmax.mjs`
   captures the softmax stages at 0.5×, `norm.mjs` types a sentence with numbers, "Dr." and a decomposed vowel sign,
   `vits.mjs --url=…` walks the VITS steps, checks playback, Play voice again and the download name, `robot.mjs`
-  shoots every debug angle and joint test, `face.mjs <out> <url>` the mouth shapes and the paper). Most scripts
-  take `--url=`; `replay.mjs <outDir> <url>`. Use `waitUntil: "load"`, not `networkidle`, with the robot scene.
+  shoots every debug angle and joint test, `face.mjs <out> <url>` the mouth shapes and the paper; Phase 6:
+  `ik.mjs` + `poses.mjs` (arm-angle search), `motion.mjs <out> <url> <view> "<Act label>:<shots>,…"` plays debug
+  scenes in slow motion (env `SLOW=0`, `WAIT_FIRST=ms`), `lipsync.mjs` steps a full run and shoots the face while
+  speaking, `emotions.mjs` the five emotion faces, `again.mjs` Play voice again + Replay, `follow.mjs <out> <url>
+  <view> [reduced]` the mouse follow). Most scripts take `--url=`; `replay.mjs <outDir> <url>`. Use
+  `waitUntil: "load"`, not `networkidle`, with the robot scene. In debug screenshots press "Hide" first (the panel
+  covers the head in the small input-screen frame).
   Software WebGL makes the full robot scene slow (about 5 fps, each screenshot several seconds); that is the test
   browser, not the app. Ask the user for the FPS on their GPU (`?debug=1` shows it).
   Element screenshots take about a second each in software WebGL, so time-sensitive frames drift; slow the speed.
@@ -190,10 +235,7 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
   6-layer text encoder, 192 hidden, 2 heads, stochastic duration predictor, 4-step flow, HiFi-GAN upsampling
   8×8×2×2 = 256, 16 kHz, 58 symbols, one speaker in the base checkpoint (speaker table + emotion lane = fine-tuning).
 - **Phase 5, robot model:** done (see "Robot scene" above).
-- **Phase 6, motion:** a GSAP timeline (`useRobotTimeline`) for look, reach, grip, lift, read loop, look up, speak,
-  put back. Add `useLipSync` (analyser RMS → jaw with 40 ms attack and 90 ms release, band energy → round/wide lips,
-  closed in silence) and `useIdleMotion` (blinks, breathing, saccades, mouse follow, weight shift). Add `emotionPose`
-  (blended over 600 ms). All layers are added together in one `useFrame`. Play voice again → the robot speaks again.
+- **Phase 6, motion:** done (see "Robot motion" above).
 - **Phase 7, polish:** loading, empty and error states; keyboard; reduced motion; checks at 375/768/1280/1920; the full
   README with "How to connect the real models"; zero lint warnings.
 

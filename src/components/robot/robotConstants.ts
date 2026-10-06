@@ -167,10 +167,10 @@ export const KEY_POSES = {
   readL: { armL: arm([-0.873, -0.26, -0.242, -1.692, -0.15, -0.345, 0.171], HOLD_CURL, HOLD_THUMB) },
   /** Speaking: head up towards the viewer. */
   speak: { spine: [0.03, 0, 0], neck: [0.02, 0.06, 0], head: [-0.02, 0.1, 0] },
-  /** The page lowered to the right, so the chest light shows. */
-  speakR: { armR: arm([-0.143, -0.006, 0.081, -1.462, -0.534, 0.001, 0.01], HOLD_CURL, HOLD_THUMB) },
-  /** The free left hand while speaking: forearm forward, palm turned in, ready to gesture. */
-  gestureL: { armL: arm([-0.3, 0.25, 0.18, -1.25, -0.1, 1.1, 0], 0.35, 0.25) },
+  /** The page lowered to the right and held fairly upright, so the chest light shows past it. */
+  speakR: { armR: arm([-0.12, 0.19, 0.196, -1.514, -1.03, 0.037, 0.04], HOLD_CURL, HOLD_THUMB) },
+  /** The free left hand while speaking: forearm forward and a little up, palm turned in, ready to gesture. */
+  gestureL: { armL: arm([-0.5, 0.25, 0.25, -1.4, -0.1, 1.1, 0], 0.35, 0.25) },
   /** Back to the resting pose, in parts. */
   restBody: { spine: REST_POSE.spine, neck: REST_POSE.neck, head: REST_POSE.head, gaze: REST_POSE.gaze, breath: 0, shrug: 0 },
   restL: { armL: REST_POSE.armL },

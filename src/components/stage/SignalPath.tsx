@@ -59,14 +59,17 @@ function measure(container: HTMLElement, wide: boolean): Geometry | null {
   return { trip1, trip2: null, bus: trip1, compact: true };
 }
 
-function Packet({ path, duration, onDone, compact, children }: {
+function Packet({ path, duration, onDone, compact, fadeOnArrival = false, children }: {
   path: string;
   duration: number;
   onDone?: () => void;
   compact: boolean;
+  /** The voice packet melts into the robot's chest light instead of staying on top of the robot. */
+  fadeOnArrival?: boolean;
   children: ReactNode;
 }) {
   const reduceMotion = useReducedMotion();
+  const seconds = duration / 1000;
   return (
     <motion.div
       className={cn(
@@ -76,8 +79,20 @@ function Packet({ path, duration, onDone, compact, children }: {
       style={{ offsetPath: `path("${path}")`, offsetRotate: "0deg" }}
       // With reduced motion the packet simply appears at its destination and fades.
       initial={{ offsetDistance: reduceMotion ? "100%" : "0%", opacity: 0 }}
-      animate={reduceMotion ? { opacity: [0, 1, 0] } : { offsetDistance: "100%", opacity: 1 }}
-      transition={reduceMotion ? { duration: 0.6 } : { duration: duration / 1000, ease: EASE, opacity: { duration: 0.2 } }}
+      animate={
+        reduceMotion
+          ? { opacity: [0, 1, 0] }
+          : { offsetDistance: "100%", opacity: fadeOnArrival ? [0, 1, 1, 0] : 1 }
+      }
+      transition={
+        reduceMotion
+          ? { duration: 0.6 }
+          : {
+              duration: seconds,
+              ease: EASE,
+              opacity: fadeOnArrival ? { duration: seconds + 0.3, times: [0, 0.15, 0.75, 1] } : { duration: 0.2 },
+            }
+      }
       onAnimationComplete={onDone}
     >
       {!compact && children}
@@ -188,7 +203,7 @@ export function SignalPath({ containerRef }: { containerRef: RefObject<HTMLEleme
         </Packet>
       )}
       {stage === "playing" && geometry.trip2 && (
-        <Packet key={`voice-${speakRequest}`} path={geometry.trip2} duration={voiceMs} compact={false}>
+        <Packet key={`voice-${speakRequest}`} path={geometry.trip2} duration={voiceMs} compact={false} fadeOnArrival>
           <VoiceGlyph />
         </Packet>
       )}
