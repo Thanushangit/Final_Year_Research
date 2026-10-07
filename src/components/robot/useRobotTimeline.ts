@@ -15,8 +15,10 @@ function sceneFor(stage: Stage): SceneName {
   switch (stage) {
     case "understanding":
     case "handoff":
-    case "speaking":
       return "read";
+    // The packet has reached VITS: the robot thinks while the voice is made.
+    case "speaking":
+      return "think";
     case "playing":
       return "speak";
     case "done":

@@ -2,7 +2,7 @@
 
 `[x]` = done, `[ ]` = not done yet. Claude ticks each item as soon as it is finished.
 
-**Now:** Phase 6 is finished. Waiting for you to check it in the browser and reply `continue` (next: Phase 7, polish and README).
+**Now:** Phase 7, second review: matching the face, head plates, hands and shoulders to your close-up crops.
 
 ---
 
@@ -77,7 +77,37 @@
 - [x] Build + lint + screenshots (each scene in slow motion, reading eyes, lip-sync in a full run, five emotion faces, Play voice again, Replay, mouse follow, reduced motion, 1440 and 375 px)
 - [x] STOP: you check it in the browser and reply `continue`
 
-### Phase 7 — Polish and handover
+### Phase 7 — New robot look (realistic android, from your reference image)
+- [x] Study the reference image closely (proportions, plates, joints, colours, face)
+- [x] Head: realistic bald human face (sculpted in code), real-looking eyes and eyelids, lips that still lip-sync, scalp seams, black ear discs
+- [x] Neck: black mechanical neck with cables and a segmented column
+- [x] Torso: white armour plates (collar, chest, stomach), black core with glowing slats (emotion colour)
+- [x] Arms: big round shoulder caps, black joint discs, white upper-arm and forearm shells, black elbows
+- [x] Hands: four fingers and a thumb, three segments each, black knuckles
+- [x] Every Phase 6 action still works (pick up, read, speak, lip-sync, blink, emotions, put back)
+- [x] Build + lint + screenshots (portrait, face close-up, every face movement, five emotions, pick-up, reading, speaking, a full run, the production build)
+- [x] First review: you checked it and sent changes
+
+**Phase 7 changes from your review**
+- [x] Cheeks and jaw: fuller cheeks (no hollows under the eyes) and a strong square jaw, like `public/Robot.png`
+- [x] More human facial actions for each emotion
+- [x] Hands resting on the desk look natural (fingers visible, not sinking into the desk)
+- [x] Paper grip: thumb in front of the page, four fingers behind it, page colour easy to tell apart from the fingers
+- [x] After the packet reaches VITS: one hand holds the page, the other hand makes a thinking gesture (hand to chin)
+- [x] While the voice is being made: natural small movements and facial reactions
+- [x] Build + lint + screenshots
+- [x] Second review: you sent close-up crops of the reference (face, head panels, hand, shoulder)
+
+**Phase 7 changes from your second review (close-up crops)**
+- [ ] Compare each part with the crops and list the differences
+- [ ] Face: soft low brows, deep-set eyes with lid creases, straight narrow nose, thin upper lip with a clear cupid's bow
+- [ ] Head: raised side plates from the crown down to the ear discs, with seams and screws; the face plate's edge along the jaw
+- [ ] Hands: segmented white plates on the back of the hand, big black rounded knuckle joints, chunkier finger segments
+- [ ] Shoulders: two-piece cap with a seam, black ring bearing and mechanics underneath
+- [ ] Build + lint + screenshots
+- [ ] STOP: you check it in the browser and reply `continue`
+
+### Phase 8 — Polish and handover
 - [ ] Loading, empty and error states with clear messages
 - [ ] Keyboard (Enter, Space, →, R), focus rings, reduced-motion support
 - [ ] Full `README.md` including "How to connect the real models"

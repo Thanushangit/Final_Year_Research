@@ -4,22 +4,23 @@
 import type { ArmPose, RobotPose } from "./pose";
 import type { PartialPose } from "./poseMath";
 
+// Robot colours were picked from the reference image of the android.
 export const COLORS = {
-  shell: "#f2efe8", // matte ivory body
-  joint: "#1b2e50", // navy joints
-  gold: "#c9a227", // small accents
-  visor: "#132036", // the dark face plate and the eyelids
-  eyeWhite: "#f6f3ec",
-  iris: "#b8901f",
-  irisRing: "#e2c25a",
-  pupil: "#0a0f1a",
-  lip: "#e6dccf",
-  mouthInside: "#05080f",
-  chestGlass: "#0b1424",
+  armor: "#e6e1dc", // off-white plates
+  mech: "#2a2724", // dark mechanics between the plates
+  cable: "#161514", // glossy black cables
+  metal: "#8e8a85", // rings and connectors
+  screw: "#6f6b67",
+  skinSheen: "#f2d9cf", // the soft glow at the skin's edges
+  mouthInside: "#1a0d0c",
+  teeth: "#e3ddd0",
+  coreSlat: "#0d0c0b",
+  gold: "#c9a227", // the core's glow before an emotion is known
+  navy: "#1b2e50", // ink on the paper, a book, the lamp
   wood: "#5a3d29",
   woodDark: "#3f2a1c",
   leather: "#23463c",
-  paper: "#f7f3ea",
+  paper: "#f1e3c2", // warm cream, so the page stands apart from the robot's cool white fingers
   floor: "#0d1729",
   wall: "#1a2b4c",
   lampLight: "#ffd6a0",
@@ -36,43 +37,38 @@ export const ROOM = {
   books: { position: [-0.62, 0.725, -0.12] as const },
 };
 
-/** Robot body measurements, relative to each joint's parent. */
+/**
+ * Robot body measurements, relative to each joint's parent. The head and face are measured in
+ * face/landmarks.ts (a real adult head, about 23 cm from chin to crown).
+ */
 export const BODY = {
   waistY: 0.62, // the spine pivot, just below the desk top
-  torsoScale: [1.15, 1, 0.72] as const,
   shoulderY: 0.47,
   shoulderX: 0.235,
   neckY: 0.53,
-  neckLength: 0.075,
-  head: {
-    centreY: 0.15, // skull centre above the head pivot
-    radius: 0.16,
-    scale: [1.12, 1, 1.02] as const,
-    visorRadius: 0.163,
-  },
-  eye: { x: 0.058, y: 0.175, z: 0.1456, radius: 0.028 },
-  brow: { x: 0.06, y: 0.226, z: 0.141, size: [0.05, 0.009, 0.008] as const },
-  mouth: { y: 0.08, z: 0.146 },
-  // Deep in the head, so the lower lip drops nearly straight down instead of swinging back into the face.
-  jawPivot: { y: 0.1, z: 0.026 },
-  upperArm: { length: 0.26, radius: 0.04 },
-  forearm: { length: 0.24, radius: 0.035 },
-  palm: { size: [0.07, 0.075, 0.026] as const },
-  finger: { radius: 0.0095, base: 0.026, tip: 0.022, spread: 0.022 },
+  neckLength: 0.1, // a long mechanical neck, as in the reference
+  upperArm: { length: 0.26 },
+  forearm: { length: 0.24 },
+  palm: { size: [0.08, 0.075, 0.026] as const },
+  /** Four fingers, three segments each (lengths from the knuckle out). */
+  finger: { radius: 0.0082, segments: [0.027, 0.02, 0.017] as const, spread: 0.0175 },
+  /** Long enough to reach past the palm, so it can press a page from the front. */
+  thumb: { segments: [0.025, 0.02, 0.016] as const },
 };
 
 /** How far joints may move, so poses from later layers stay believable. */
 export const LIMITS = {
-  jawOpen: 0.15, // radians at mouth.open = 1 (the lower lip drops about 1.8 cm)
-  upperLidOpen: 1.05, // radians the upper lid tilts back when fully open
-  lowerLidOpen: 0.75,
-  fingerBase: 1.1, // radians at curl = 1
-  fingerTip: 1.3,
+  fingerBase: 0.95, // radians at curl = 1, for each finger segment
+  fingerMiddle: 1.15,
+  fingerTip: 0.8,
   thumb: 0.9,
   shrug: 0.02, // metres the shoulders rise at shrug = 1
+  lidWide: 0.2, // lids.upper = −0.2 lifts the upper lids fully
+  browRaise: 0.0055, // metres of brows.raise for the full brow-lift shape
+  browTilt: 0.3, // radians of brows.tilt for the full inner-up (or frown) shape
 };
 
-/** Joint names. Robot parts put these on their groups; the pose code finds them by name. */
+/** Joint and part names. Robot parts put these on their objects; the pose code finds them by name. */
 export const JOINT = {
   spine: "spine",
   chest: "chest",
@@ -80,44 +76,38 @@ export const JOINT = {
   head: "head",
   eyeL: "eye-left",
   eyeR: "eye-right",
-  upperLidL: "lid-upper-left",
-  lowerLidL: "lid-lower-left",
-  upperLidR: "lid-upper-right",
-  lowerLidR: "lid-lower-right",
-  browL: "brow-left",
-  browR: "brow-right",
+  face: "face",
+  lidL: "lid-left",
+  lidR: "lid-right",
   jaw: "jaw",
-  upperLip: "lip-upper",
-  lowerLip: "lip-lower",
-  mouthInside: "mouth-inside",
   chestPanel: "chest-panel",
 } as const;
 
 export type Side = "left" | "right";
 
-/** Arm joint names for one side. */
+/** Arm joint names for one side. Fingers 0–3 run from the thumb side; segments 0–2 from the knuckle out. */
 export const armJoint = (side: Side) => ({
   shoulder: `${side}-shoulder`,
   elbow: `${side}-elbow`,
   wrist: `${side}-wrist`,
-  thumbBase: `${side}-thumb-base`,
-  thumbTip: `${side}-thumb-tip`,
-  fingerBase: (i: number) => `${side}-finger-${i}-base`,
-  fingerTip: (i: number) => `${side}-finger-${i}-tip`,
+  thumb: (segment: number) => `${side}-thumb-${segment}`,
+  finger: (i: number, segment: number) => `${side}-finger-${i}-${segment}`,
   grip: `${side}-grip`,
 });
 
-/** Sitting at the desk: forearms resting on it, head turned a little towards the camera, a gentle smile. */
+/** Sitting at the desk: forearms resting on it, head turned a little towards the camera, a calm face. */
 export const REST_POSE: RobotPose = {
   spine: [0.06, 0, 0],
   neck: [0.04, 0.06, 0],
   head: [0.05, 0.1, 0.02],
   gaze: { yaw: 0.1, pitch: 0.02 },
-  lids: { upper: 0.12, lower: 0.05 },
+  lids: { upper: 0.06, lower: 0.03 },
   brows: { raise: 0, tilt: 0.04 },
-  mouth: { open: 0, smile: 0.35, wide: 0, round: 0, press: 0 },
-  armL: { shoulder: [-0.35, 0, 0.12], elbow: -0.72, wrist: [-0.5, 0, 0], curl: 0.25, thumb: 0.2 },
-  armR: { shoulder: [-0.35, 0, 0.12], elbow: -0.72, wrist: [-0.5, 0, 0], curl: 0.25, thumb: 0.2 },
+  mouth: { open: 0, smile: 0.12, wide: 0, round: 0, press: 0, frown: 0, sneer: 0, stretch: 0, cheek: 0 },
+  // Hands lying on the desk: palms down, fingers relaxed with their tips just touching the wood
+  // (solved so no part of the hand or forearm goes below the desk top).
+  armL: { shoulder: [-0.257, -0.18, -0.025], elbow: -1.143, wrist: [-0.16, 0.089, -0.096], curl: 0.3, thumb: 0.2 },
+  armR: { shoulder: [-0.257, -0.18, -0.025], elbow: -1.143, wrist: [-0.16, 0.089, -0.096], curl: 0.3, thumb: 0.2 },
   breath: 0,
   shrug: 0,
 };
@@ -133,16 +123,25 @@ const arm = (a: readonly number[], curl: number, thumb: number): ArmPose => ({
   thumb,
 });
 
-/** How the right hand holds the paper: a light pinch, fingertips just touching the page. */
-const HOLD_CURL = 0.3;
-const HOLD_THUMB = 0.65;
+/** Taking the paper from the desk: a light pinch, fingertips on the page. */
+const HOLD_CURL = 0.2;
+const HOLD_THUMB = 0.3;
+/** Holding it up to read, like a person: fingers straight behind the page, the thumb in front of it. */
+const READ_CURL = 0.04;
+const READ_THUMB = 0.35;
+/** The hand under the chin while thinking: a loose fist. */
+const FIST_CURL = 0.62;
+const FIST_THUMB = 0.45;
 
 /**
  * Key poses for the paper choreography. Each one only lists the joints it moves. The arm angles come
- * from a small inverse-kinematics search, so the hand really meets the paper's edge on the desk and
- * the page ends up facing the robot's eyes.
+ * from a small inverse-kinematics search, so the hand really meets the paper's edge on the desk, both
+ * hands hold the same page, the page faces the robot's eyes, and the thinking fist touches the chin.
  */
 const GRIP_ANGLES = [-0.73, -0.128, -0.346, -0.585, -0.401, -0.224, 0.169];
+
+/** The body leaning a little forward to think, the head tipped onto the left hand. */
+const THINK_BODY = { spine: [0.1, 0, 0], neck: [0.06, 0.04, 0], head: [0.03, 0.1, -0.06] } satisfies PartialPose;
 
 export const KEY_POSES = {
   /** Leaning over the desk to look at the paper. */
@@ -157,18 +156,22 @@ export const KEY_POSES = {
   /** Halfway up, the page tipping towards the robot. */
   liftBody: { spine: [0.1, -0.03, 0], neck: [0.1, -0.02, 0], head: [0.18, -0.04, 0] },
   liftR: { armR: arm([-0.419, -0.254, -0.205, -1.572, -0.201, -0.172, 0.139], HOLD_CURL, HOLD_THUMB) },
-  /** Reading: the page in front of the chest, facing the eyes, a hand on each side. */
+  /** Reading: the page in front of the chest, facing the eyes, held by its two bottom corners. */
   read: {
     spine: [0.04, 0, 0],
     neck: [0.06, 0, 0],
     head: [0.12, 0, 0],
-    armR: arm([-0.947, -0.222, -0.332, -1.523, -0.162, -0.214, 0.128], HOLD_CURL, HOLD_THUMB),
+    armR: arm([-0.62, -0.181, -0.4, -1.408, -0.675, 2.737, 0.037], READ_CURL, READ_THUMB),
   },
-  readL: { armL: arm([-0.873, -0.26, -0.242, -1.692, -0.15, -0.345, 0.171], HOLD_CURL, HOLD_THUMB) },
+  readL: { armL: arm([-0.601, -0.595, 0.096, -1.539, -0.42, 2.938, -0.588], READ_CURL, READ_THUMB) },
+  /** Thinking (while VITS makes the voice): the page lowered in the right hand, the left fist under the chin. */
+  think: THINK_BODY,
+  thinkR: { armR: arm([-0.107, -0.333, 0.26, -1.638, -0.938, 2.682, -0.46], READ_CURL, READ_THUMB) },
+  thinkL: { armL: arm([-0.903, -0.988, -0.4, -2.312, -0.332, 0.617, 0.166], FIST_CURL, FIST_THUMB) },
   /** Speaking: head up towards the viewer. */
   speak: { spine: [0.03, 0, 0], neck: [0.02, 0.06, 0], head: [-0.02, 0.1, 0] },
   /** The page lowered to the right and held fairly upright, so the chest light shows past it. */
-  speakR: { armR: arm([-0.12, 0.19, 0.196, -1.514, -1.03, 0.037, 0.04], HOLD_CURL, HOLD_THUMB) },
+  speakR: { armR: arm([-0.205, -0.346, 0.365, -1.138, -1.251, 2.739, -0.602], READ_CURL, READ_THUMB) },
   /** The free left hand while speaking: forearm forward and a little up, palm turned in, ready to gesture. */
   gestureL: { armL: arm([-0.5, 0.25, 0.25, -1.4, -0.1, 1.1, 0], 0.35, 0.25) },
   /** Back to the resting pose, in parts. */
@@ -180,10 +183,15 @@ export const KEY_POSES = {
 /** Where on the page (metres from its centre; +u = page right, +v = page top) the right hand holds it. */
 export const PAPER_GRIP_SPOT = { u: 0.105, v: -0.06 };
 
-/** The paper's position and turn relative to the right hand's grip point while it is held. */
+/**
+ * The paper's position and turn relative to the right hand's grip point while it is held.
+ * pickUp: taken from the desk with the hand on top of the page. read: held up like a person reads a
+ * letter, by the bottom right corner, the four fingers behind the page and the thumb in front of it
+ * (the page's text faces the palm). The hand shifts from one to the other while lifting the page.
+ */
 export const PAPER_HOLD = {
-  position: [PAPER_GRIP_SPOT.u, PAPER_GRIP_SPOT.v, -0.002] as const,
-  rotation: [0, 0, Math.PI] as const,
+  pickUp: { position: [PAPER_GRIP_SPOT.u, PAPER_GRIP_SPOT.v, -0.002] as const, rotation: [0, 0, Math.PI] as const },
+  read: { position: [-0.1, -0.104, 0.0125] as const, rotation: [Math.PI, 0, 0] as const },
 };
 
 /** Moving the whole body: the eyes lead, the head follows about 150 ms later, then the body. */
@@ -240,6 +248,13 @@ export const CHOREO = {
     gestureAt: 1.0,
     breathOut: 1.6,
   },
+  /** The pick-up's hand shifts from the desk grip to the reading grip while the page comes up. */
+  regrip: 0.9,
+  think: {
+    settle: 1.0, // the body leans in and the head tips
+    freeHandAt: 0.15, freeHand: 1.1, // the left hand lets go of the page and comes up to the chin
+    lowerPaper: 0.9,
+  },
   putBack: {
     pause: 0.6, // a short pause after the last word
     look: 0.7,
@@ -270,6 +285,32 @@ export const READING = {
   /** Rest after the last line, before reading again from the top. */
   pageEndPause: 0.7,
 };
+
+/**
+ * Thinking while VITS makes the voice: a loop of small beats, each with its own look and face.
+ * Gaze is in radians (+yaw = the robot's left, +pitch = up); `paper` is a spot on the page to glance at.
+ * Head changes stay small: the chin rests on the left hand.
+ */
+export const THINKING: Array<{
+  hold: number;
+  gaze?: { yaw: number; pitch: number };
+  paper?: { u: number; v: number };
+  face: PartialPose;
+  head?: [number, number];
+  tap?: number;
+}> = [
+  // Looks up and away, concentrating: brows drawn together a little, lips pressed.
+  { hold: 2.2, gaze: { yaw: 0.32, pitch: 0.3 }, face: { brows: { raise: 0, tilt: -0.1 }, mouth: { press: 0.3, round: 0, smile: 0.04 } }, head: [-0.02, 0.02] },
+  // Fingers tap the cheek twice.
+  { hold: 0.9, face: {}, tap: 2 },
+  // A glance down at the page.
+  { hold: 1.5, paper: { u: 0.02, v: 0.05 }, face: { brows: { raise: 0.0005, tilt: 0 }, mouth: { press: 0.12, round: 0, smile: 0.06 } }, head: [0.03, -0.05] },
+  // Up the other way, lips pursed: "hmm".
+  { hold: 1.9, gaze: { yaw: -0.22, pitch: 0.24 }, face: { brows: { raise: 0.0012, tilt: 0.06 }, mouth: { press: 0, round: 0.28, smile: 0 } }, head: [-0.015, -0.01] },
+  // The idea arrives: brows lift, a small smile, a little nod.
+  { hold: 1.3, gaze: { yaw: 0.06, pitch: 0.04 }, face: { brows: { raise: 0.0025, tilt: 0.02 }, mouth: { press: 0, round: 0, smile: 0.22 } }, head: [0.03, 0] },
+  { hold: 1.0, gaze: { yaw: 0.1, pitch: 0.1 }, face: { brows: { raise: 0.0008, tilt: 0 }, mouth: { press: 0.1, round: 0, smile: 0.14 } }, head: [0, 0] },
+];
 
 /** Lip-sync from the shared AnalyserNode. */
 export const LIP_SYNC = {
@@ -339,14 +380,15 @@ export const CAMERA = {
   fitWidth: 1.5,
 };
 
-export type CameraView = "front" | "threeQuarter" | "side" | "face" | "paper";
+export type CameraView = "front" | "threeQuarter" | "side" | "portrait" | "face" | "paper";
 
-/** The angles offered in ?debug=1: three around the robot, plus close-ups of the face and the paper. */
+/** The angles offered in ?debug=1: three around the robot, a portrait like the reference image, and close-ups. */
 export const DEBUG_VIEWS: Record<CameraView, { label: string; position: readonly [number, number, number]; target: readonly [number, number, number] }> = {
   front: { label: "Front", position: [0, 1.35, 2.6], target: [0, 1.05, -0.3] },
   threeQuarter: { label: "Three-quarter", position: [1.55, 1.5, 1.85], target: [0, 1.05, -0.3] },
   side: { label: "Side", position: [2.7, 1.3, -0.4], target: [0, 1.05, -0.35] },
-  face: { label: "Face close-up", position: [0.1, 1.42, 0.45], target: [0, 1.37, -0.4] },
+  portrait: { label: "Portrait", position: [0, 1.2, 1.0], target: [0, 1.13, -0.45] },
+  face: { label: "Face close-up", position: [0.06, 1.33, 0.26], target: [0, 1.3, -0.38] },
   // Over the robot's left shoulder: the page faces the robot, so this is the side the text reads from.
   paper: { label: "Paper", position: [0.3, 1.3, -0.25], target: [0.03, 0.73, 0.08] },
 };

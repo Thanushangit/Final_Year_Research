@@ -1,33 +1,30 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { createLipGeometry } from "../lipGeometry";
+import { FACE } from "../face/landmarks";
 import { useRobotMaterials } from "../materials";
-import { BODY, JOINT } from "../robotConstants";
+import { JOINT } from "../robotConstants";
 
-/** Upper lip on the face; lower lip on the jaw, which hinges open behind the mouth. */
+const [, HINGE_Y, HINGE_Z] = FACE.jawHinge;
+
+/**
+ * Behind the lips: a dark mouth inside and the teeth. The upper teeth stay with the head; the lower
+ * teeth turn with the jaw (the lips and chin themselves are shape changes on the skin).
+ */
 export function Mouth() {
   const m = useRobotMaterials();
-  const upper = useMemo(() => createLipGeometry("upper"), []);
-  const lower = useMemo(() => createLipGeometry("lower"), []);
-  useEffect(
-    () => () => {
-      upper.dispose();
-      lower.dispose();
-    },
-    [upper, lower],
-  );
-  const { mouth, jawPivot } = BODY;
-
   return (
-    <>
-      <mesh name={JOINT.mouthInside} position={[0, mouth.y - 0.002, mouth.z + 0.0055]} scale={[1, 0.08, 1]} material={m.mouthInside}>
-        <circleGeometry args={[0.036, 32]} />
+    <group>
+      <mesh material={m.mouthInside} position={[0, -0.004, 0.07]} scale={[0.021, 0.015, 0.019]}>
+        <sphereGeometry args={[1, 24, 16]} />
       </mesh>
-      <mesh name={JOINT.upperLip} geometry={upper} material={m.lip} position={[0, mouth.y, mouth.z]} />
-      <group name={JOINT.jaw} position={[0, jawPivot.y, jawPivot.z]}>
-        <mesh name={JOINT.lowerLip} geometry={lower} material={m.lip} position={[0, mouth.y - jawPivot.y, mouth.z - jawPivot.z]} />
+      <mesh material={m.teeth} position={[0, 0.0045, 0.068]}>
+        <cylinderGeometry args={[0.0235, 0.0235, 0.008, 24, 1, false, -0.85, 1.7]} />
+      </mesh>
+      <group name={JOINT.jaw} position={[0, HINGE_Y, HINGE_Z]}>
+        <mesh material={m.teeth} position={[0, -0.0025 - HINGE_Y, 0.068 - HINGE_Z]}>
+          <cylinderGeometry args={[0.022, 0.022, 0.007, 24, 1, false, -0.8, 1.6]} />
+        </mesh>
       </group>
-    </>
+    </group>
   );
 }

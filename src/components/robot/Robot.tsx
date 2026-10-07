@@ -5,7 +5,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useReducedMotion } from "motion/react";
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
-import { Color, type Group, type Mesh, type MeshPhysicalMaterial } from "three";
+import { Color, type Group, type Mesh, type MeshStandardMaterial } from "three";
 import { EMOTIONS, type Emotion } from "@/lib/api/contracts";
 import { EMOTION_HEX } from "@/lib/emotions";
 import { usePipelineStore, type PipelineStore } from "@/store/pipelineStore";
@@ -15,7 +15,8 @@ import { MotionMixer, placePaper } from "./motionMixer";
 import type { LineSpot } from "./Paper";
 import { Arm } from "./parts/Arm";
 import { Head } from "./parts/Head";
-import { Neck, Torso } from "./parts/Torso";
+import { Neck } from "./parts/Neck";
+import { Torso } from "./parts/Torso";
 import { applyPose, collectRig, type RobotPose, type RobotRig } from "./pose";
 import { BODY, COLORS, EMOTION_REVEAL_STEP, JOINT, ROOM } from "./robotConstants";
 import { useIdleMotion } from "./useIdleMotion";
@@ -31,12 +32,12 @@ function shownEmotion(state: PipelineStore) {
   return revealed ? state.emotion : null;
 }
 
-/** The chest panel glows in the predicted emotion's colour and pulses with the voice. */
+/** The core behind the stomach slats glows in the predicted emotion's colour and pulses with the voice. */
 function glowChest(panel: Mesh | undefined, colour: Color, level: number, delta: number) {
-  const glass = panel?.material as MeshPhysicalMaterial | undefined;
-  if (!glass) return;
-  glass.emissive.lerp(colour, 1 - Math.exp(-3 * delta));
-  glass.emissiveIntensity = 0.45 + level * 9;
+  const glow = panel?.material as MeshStandardMaterial | undefined;
+  if (!glow) return;
+  glow.emissive.lerp(colour, 1 - Math.exp(-3 * delta));
+  glow.emissiveIntensity = 2 + level * 14;
 }
 
 interface RobotProps {
@@ -78,7 +79,7 @@ export function Robot({ paper, lines, testPose, debugScene }: RobotProps) {
     const shown = shownEmotion(usePipelineStore.getState());
     if (testPose) {
       applyPose(current, testPose);
-      if (paper.current) placePaper(paper.current, undefined, 0);
+      if (paper.current) placePaper(paper.current, undefined, 0, 0);
     } else {
       mixer.step(
         { choreo, emotion, idle, lipSync },

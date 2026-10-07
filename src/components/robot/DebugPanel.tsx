@@ -11,6 +11,7 @@ import { DEBUG_VIEWS, type CameraView } from "./robotConstants";
 
 const SCENES: Array<{ scene: SceneName; label: string }> = [
   { scene: "read", label: "Pick up and read" },
+  { scene: "think", label: "Think" },
   { scene: "speak", label: "Look up and speak" },
   { scene: "putBack", label: "Put paper back" },
   { scene: "rest", label: "Rest" },

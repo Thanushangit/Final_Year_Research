@@ -32,23 +32,32 @@ export interface MotionInput {
 
 const deskPosition = new Vector3(...PAPER_ON_DESK.position);
 const deskRotation = new Quaternion().setFromEuler(new Euler(...PAPER_ON_DESK.rotation));
-const hold = new Matrix4().compose(
-  new Vector3(...PAPER_HOLD.position),
-  new Quaternion().setFromEuler(new Euler(...PAPER_HOLD.rotation)),
-  new Vector3(1, 1, 1),
-);
+const pickPosition = new Vector3(...PAPER_HOLD.pickUp.position);
+const pickRotation = new Quaternion().setFromEuler(new Euler(...PAPER_HOLD.pickUp.rotation));
+const readPosition = new Vector3(...PAPER_HOLD.read.position);
+const readRotation = new Quaternion().setFromEuler(new Euler(...PAPER_HOLD.read.rotation));
+const hold = new Matrix4();
+const holdPosition = new Vector3();
+const holdRotation = new Quaternion();
+const unitScale = new Vector3(1, 1, 1);
 const held = new Matrix4();
 const heldPosition = new Vector3();
 const heldRotation = new Quaternion();
 const heldScale = new Vector3();
 
-/** The paper lies on the desk (attach 0), sits in the hand (attach 1), or is part-way between. */
-export function placePaper(paper: Object3D, grip: Object3D | undefined, attach: number): void {
+/**
+ * The paper lies on the desk (attach 0), sits in the hand (attach 1), or is part-way between.
+ * regrip moves it from the pick-up hold (0) to the reading hold (1), as a hand shifts its grip.
+ */
+export function placePaper(paper: Object3D, grip: Object3D | undefined, attach: number, regrip: number): void {
   if (!grip || attach <= 0.001) {
     paper.position.copy(deskPosition);
     paper.quaternion.copy(deskRotation);
   } else {
     grip.updateWorldMatrix(true, false);
+    holdPosition.lerpVectors(pickPosition, readPosition, regrip);
+    holdRotation.slerpQuaternions(pickRotation, readRotation, regrip);
+    hold.compose(holdPosition, holdRotation, unitScale);
     held.multiplyMatrices(grip.matrixWorld, hold).decompose(heldPosition, heldRotation, heldScale);
     paper.position.lerpVectors(deskPosition, heldPosition, attach);
     paper.quaternion.slerpQuaternions(deskRotation, heldRotation, attach);
@@ -90,7 +99,7 @@ export class MotionMixer {
 
     this.writeChannels(layers.choreo.channels, pose);
     layers.emotion.update(input.scores, dt);
-    layers.emotion.apply(pose);
+    layers.emotion.apply(pose, this.time, 1 - cues.chinRest);
     layers.choreo.setTempo(layers.emotion.motion.tempo);
     rig.head?.getWorldPosition(this.head);
     layers.idle.update(pose, dt, {
@@ -106,7 +115,7 @@ export class MotionMixer {
     limitFace(pose);
 
     applyPose(rig, pose);
-    if (input.paper) placePaper(input.paper, rig.armR.grip, cues.attach);
+    if (input.paper) placePaper(input.paper, rig.armR.grip, cues.attach, cues.regrip);
     this.aimEyes(layers, input);
     applyEyes(rig, pose);
   }
@@ -152,6 +161,10 @@ function limitFace(pose: RobotPose): void {
   mouth.wide = clamp(mouth.wide, 0, 1);
   mouth.round = clamp(mouth.round, 0, 1);
   mouth.press = clamp(mouth.press, 0, 1);
+  mouth.frown = clamp(mouth.frown, 0, 1);
+  mouth.sneer = clamp(mouth.sneer, 0, 1);
+  mouth.stretch = clamp(mouth.stretch, 0, 1);
+  mouth.cheek = clamp(mouth.cheek, 0, 1);
   brows.tilt = clamp(brows.tilt, -0.4, 0.4);
   brows.raise = clamp(brows.raise, -0.004, 0.007);
 }

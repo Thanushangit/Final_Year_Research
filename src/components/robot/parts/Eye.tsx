@@ -1,49 +1,55 @@
 "use client";
 
-import type { Material } from "three";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { BufferAttribute, BufferGeometry, type Mesh } from "three";
+import { buildLid, LID_MORPHS } from "../face/eyelids";
+import { FACE } from "../face/landmarks";
 import { useRobotMaterials } from "../materials";
-import { BODY, JOINT, type Side } from "../robotConstants";
+import { JOINT, type Side } from "../robotConstants";
 
-/** A cap of a sphere pointing forward (+z), for the iris and pupil so they follow the eyeball's curve. */
-function Cap({ radius, angle, material }: { radius: number; angle: number; material: Material }) {
-  return (
-    <mesh rotation={[Math.PI / 2, 0, 0]} material={material}>
-      <sphereGeometry args={[radius, 32, 6, 0, Math.PI * 2, 0, angle]} />
-    </mesh>
-  );
+const E = FACE.eye;
+
+/** The eyelid ring as a three.js geometry, with its blink and wide-open shape changes. */
+function lidGeometry(side: number): BufferGeometry {
+  const lid = buildLid(side);
+  const geometry = new BufferGeometry();
+  geometry.setAttribute("position", new BufferAttribute(lid.positions, 3));
+  geometry.setAttribute("color", new BufferAttribute(lid.colors, 3));
+  geometry.setIndex(new BufferAttribute(lid.indices, 1));
+  geometry.computeVertexNormals();
+  geometry.morphTargetsRelative = true;
+  geometry.morphAttributes.position = LID_MORPHS.map((name) => {
+    const attribute = new BufferAttribute(lid.morphs[name], 3);
+    attribute.name = name;
+    return attribute;
+  });
+  return geometry;
 }
 
 /**
- * One eye. The eyeball group turns to look around; the two lids are separate shells that tilt
- * closed over it (both at 0 = closed), so blinks look real.
+ * One eye: a glossy eyeball (its group turns to look around) and the eyelids around it. The lids
+ * blink by sliding their skin over the eyeball (shape changes set in pose.ts).
  */
 export function Eye({ side }: { side: Side }) {
   const m = useRobotMaterials();
-  const r = BODY.eye.radius;
-  const left = side === "left";
+  const s = side === "left" ? 1 : -1;
+  const lid = useMemo(() => lidGeometry(s), [s]);
+  const lidMesh = useRef<Mesh>(null);
+
+  useEffect(() => () => lid.dispose(), [lid]);
+  // A mesh sets up its shape-change slots when created, and R3F adds the geometry afterwards.
+  useLayoutEffect(() => lidMesh.current?.updateMorphTargets(), [lid]);
+
   return (
-    <group position={[left ? BODY.eye.x : -BODY.eye.x, BODY.eye.y, BODY.eye.z]}>
-      <group name={left ? JOINT.eyeL : JOINT.eyeR}>
-        <mesh material={m.eyeWhite}>
-          <sphereGeometry args={[r, 32, 24]} />
-        </mesh>
-        <Cap radius={r * 1.002} angle={0.7} material={m.irisRing} />
-        <Cap radius={r * 1.004} angle={0.6} material={m.iris} />
-        <Cap radius={r * 1.006} angle={0.27} material={m.pupil} />
-        <mesh position={[-r * 0.22, r * 0.24, r * 0.97]} material={m.highlight}>
-          <sphereGeometry args={[r * 0.1, 10, 8]} />
-        </mesh>
+    <>
+      <group position={[s * E.x, E.y, E.z]}>
+        <group name={side === "left" ? JOINT.eyeL : JOINT.eyeR}>
+          <mesh material={m.eye}>
+            <sphereGeometry args={[E.radius, 40, 28]} />
+          </mesh>
+        </group>
       </group>
-      <group name={left ? JOINT.upperLidL : JOINT.upperLidR}>
-        <mesh material={m.visor}>
-          <sphereGeometry args={[r * 1.1, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        </mesh>
-      </group>
-      <group name={left ? JOINT.lowerLidL : JOINT.lowerLidR}>
-        <mesh material={m.visor}>
-          <sphereGeometry args={[r * 1.1, 32, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
-        </mesh>
-      </group>
-    </group>
+      <mesh ref={lidMesh} name={side === "left" ? JOINT.lidL : JOINT.lidR} geometry={lid} material={m.skin} />
+    </>
   );
 }

@@ -23,14 +23,16 @@ export function useDebugMode(): boolean {
 export const POSE_TESTS = {
   blink: { label: "Blink", apply: (p: RobotPose) => Object.assign(p.lids, { upper: 1, lower: 1 }) },
   open: { label: "Open mouth", apply: (p: RobotPose) => Object.assign(p.mouth, { open: 1 }) },
-  smile: { label: "Big smile", apply: (p: RobotPose) => Object.assign(p.mouth, { smile: 1 }) },
+  smile: { label: "Big smile", apply: (p: RobotPose) => Object.assign(p.mouth, { smile: 1, cheek: 1 }) },
   frown: {
     label: "Frown",
     apply: (p: RobotPose) => {
-      Object.assign(p.mouth, { smile: -0.8 });
+      Object.assign(p.mouth, { frown: 1, smile: 0 });
       Object.assign(p.brows, { tilt: 0.3, raise: 0.004 });
     },
   },
+  sneer: { label: "Sneer", apply: (p: RobotPose) => Object.assign(p.mouth, { sneer: 1, smile: 0 }) },
+  stretch: { label: "Stretch lips", apply: (p: RobotPose) => Object.assign(p.mouth, { stretch: 1, smile: 0 }) },
   round: { label: "Round lips", apply: (p: RobotPose) => Object.assign(p.mouth, { round: 1, open: 0.45, smile: 0 }) },
   wide: { label: "Wide lips", apply: (p: RobotPose) => Object.assign(p.mouth, { wide: 1, open: 0.3, smile: 0 }) },
   fist: {
@@ -80,7 +82,8 @@ export function DebugCamera({ view, fpsRef }: { view: CameraView; fpsRef: RefObj
     counter.count += 1;
     counter.time += delta;
     if (counter.time >= 0.5 && fpsRef.current) {
-      fpsRef.current.textContent = `${Math.round(counter.count / counter.time)} fps`;
+      const triangles = Math.round(state.gl.info.render.triangles / 1000);
+      fpsRef.current.textContent = `${Math.round(counter.count / counter.time)} fps · ${triangles}k triangles`;
       counter.count = 0;
       counter.time = 0;
     }

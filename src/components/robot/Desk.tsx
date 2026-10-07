@@ -16,7 +16,7 @@ function Wood({ color = COLORS.wood, roughness = 0.62 }: { color?: string; rough
 function Books() {
   const books = [
     { size: [0.24, 0.045, 0.17], color: "#7a2e2a", y: 0 },
-    { size: [0.22, 0.04, 0.16], color: COLORS.joint, y: 0.0425 },
+    { size: [0.22, 0.04, 0.16], color: COLORS.navy, y: 0.0425 },
     { size: [0.2, 0.035, 0.15], color: "#2f4a3e", y: 0.08 },
   ] as const;
   return (
@@ -55,7 +55,7 @@ function Lamp() {
       <group position={[x, y, z]}>
         <mesh position={[0, 0.012, 0]} castShadow>
           <cylinderGeometry args={[0.09, 0.1, 0.025, 32]} />
-          <meshStandardMaterial color={COLORS.joint} metalness={0.3} roughness={0.5} />
+          <meshStandardMaterial color={COLORS.navy} metalness={0.3} roughness={0.5} />
         </mesh>
         <mesh position={[0, 0.42, 0]} castShadow>
           <cylinderGeometry args={[0.012, 0.012, 0.82, 16]} />
@@ -65,7 +65,7 @@ function Lamp() {
         <group position={[-0.05, 0.83, 0.04]} rotation={[-0.3, 0, -0.55]}>
           <mesh castShadow>
             <cylinderGeometry args={[0.035, 0.11, 0.13, 32, 1, true]} />
-            <meshStandardMaterial color={COLORS.joint} side={DoubleSide} metalness={0.3} roughness={0.5} />
+            <meshStandardMaterial color={COLORS.navy} side={DoubleSide} metalness={0.3} roughness={0.5} />
           </mesh>
           <mesh position={[0, -0.03, 0]}>
             <sphereGeometry args={[0.035, 16, 16]} />

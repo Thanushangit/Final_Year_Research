@@ -85,7 +85,7 @@ function drawFront(canvas: HTMLCanvasElement, lines: string[], family: string): 
     context.lineTo(WIDTH - MARGIN + 20, y);
     context.stroke();
   }
-  context.fillStyle = COLORS.joint;
+  context.fillStyle = COLORS.navy;
   return lines.map((line, i) => {
     const baseline = FIRST_LINE + i * LINE;
     context.fillText(line, MARGIN, baseline);
@@ -100,7 +100,7 @@ function drawBack(canvas: HTMLCanvasElement, lines: string[], family: string) {
   if (!context) return;
   context.setTransform(-1, 0, 0, 1, WIDTH, 0);
   context.globalAlpha = 0.12;
-  context.fillStyle = COLORS.joint;
+  context.fillStyle = COLORS.navy;
   lines.forEach((line, i) => context.fillText(line, MARGIN, FIRST_LINE + i * LINE));
 }
 

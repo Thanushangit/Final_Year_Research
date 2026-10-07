@@ -9,12 +9,20 @@ Full brief: `claude-code-prompt-tamil-tts-dashboard.md`. Progress checklist: `PR
   Phase 2 (input screen, stage layout, presenter controls, packet animation, placeholder robot, audio engine),
   Phase 3 (IndicBERT panel: 10 step visuals, Heatmap, ProbabilityBars, BarStrip, "What the model does" notes).
 - **Done and approved:** Phase 4 (VITS panel: 8 step visuals, wavesurfer AudioPlayer, Download voice),
-  Phase 5 (procedural robot, desk, lamp, paper, `?debug=1`).
-- **Done, waiting for the user's `continue`:** Phase 6 (choreography, lip-sync, idle life, emotion poses).
-- **Next:** Phase 7, polish and handover. See "Plan for the remaining phases" below.
-- Last check (Phase 6): `npm run build` and `npx eslint . --max-warnings=0` both clean. Browser checks: each
-  scene in slow motion (three-quarter + front), reading eyes (face close-up), lip-sync during a full run, the
-  five emotion faces, Play voice again + Replay, mouse follow (and off with reduced motion), 1440 and 375 px.
+  Phase 5 (procedural robot, desk, lamp, paper, `?debug=1`), Phase 6 (choreography, lip-sync, idle life, emotions).
+- **Phases were renumbered by the user:** a new Phase 7 rebuilt the robot's look from a reference image (a realistic
+  android: pale bald human face, black ear discs, black cable neck, off-white armour plates, black mechanics).
+  The old Phase 7 (polish) is now Phase 8.
+- **Done, waiting for the user's `continue`:** Phase 7 (new robot look; every Phase 6 action kept), plus the user's
+  first review: fuller cheeks / square jaw, new face shapes (frown, sneer, stretch, cheek) for human emotion faces
+  with small "expression life" movements, hands resting on the desk (re-solved), the reading grip (thumb in front,
+  fingers behind, bottom corners), a cream paper colour, and a new "think" scene for the VITS stage.
+- **Next:** Phase 8, polish and handover. See "Plan for the remaining phases" below.
+- Last check (Phase 7): `npm run build` and `npx eslint . --max-warnings=0` both clean. Browser checks: Portrait and
+  face close-up views, every face test pose, the five emotion faces, pick-up/reading/speaking poses, a full run to
+  "finished", and the production build (`next start -p 3100`, head built in the worker). About 190k triangles.
+- Told the user up front: an exact pixel copy of a photo is impossible in a real-time code-built model; the face
+  is sculpted in code (porcelain look, not photo skin). The emotion chest light was kept as the glowing stomach core.
 
 ## What this is
 A demo dashboard for the undergraduate project **"Emotion-Aware Sri Lankan Tamil Text-to-Speech Generation Using
@@ -50,7 +58,7 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
   which can be longer (numbers become words), so `TtsTextSchema` allows 2000.
 
 ## Workflow rules
-- Work phase by phase (0–7). After each phase run `npm run build` and `npm run lint`, fix everything, summarise in
+- Work phase by phase (0–8). After each phase run `npm run build` and `npm run lint`, fix everything, summarise in
   plain simple English, list what to check in the browser, then **STOP** until the user says `continue`.
 - The user wants visible progress: tick items in `PROGRESS.md` as soon as each one is done, give a short plain-English
   update between steps, and paste the checklist at every stop.
@@ -135,19 +143,42 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
 - **Robot scene**: `components/stage/RobotFrame.tsx` (frame + status caption, dynamic import with `ssr: false`) →
   `components/robot/RobotScene.tsx` (Canvas, lights, floor + wall, baked `ContactShadows` under the desk, `CameraRig`:
   three-quarter view, steps back on narrow frames; `?debug=1` swaps it for `DebugCamera` + `DebugPanel`).
-  - `robotConstants.ts`: all sizes, colours, `LIMITS`, `JOINT` names + `armJoint(side)`, `REST_POSE`, `CAMERA`,
-    `DEBUG_VIEWS` (front, threeQuarter, side, face, paper). Units are metres; the robot faces +z, its left is +x.
-  - `pose.ts`: `RobotPose` (spine, neck, head, gaze, lids 0 open–1 closed, brows raise/tilt, mouth open/smile/wide/
-    round/press, armL/armR {shoulder, elbow, wrist, curl, thumb}, breath, shrug), `collectRig()` finds joints by name
-    once (and calls `updateMorphTargets()` on the lips; arm rigs include the `grip` socket), `applyPose()` writes a
-    pose each frame (right arm mirrored), `applyEyes()` re-writes eyes and lids after the look-at.
-  - `Robot.tsx` assembles waist → spine → torso + chest (breath lifts it) → neck → head, and two arms; chest panel
-    glows in the emotion colour × voice loudness (`glowChest`). Parts in `parts/`: `Head` (skull, visor, ears,
-    antenna, brows), `Eye` (eyeball group turns; separate upper/lower lid shells), `Mouth` (upper lip on the face,
-    lower lip on a deep jaw pivot, unlit mouth inside), `Torso` (lathe body, gold-framed chest panel, `Neck`),
-    `Arm`, `Hand` (palm, 3 two-part fingers, two-part thumb, empty `grip` group for the paper).
-  - `lipGeometry.ts`: tube lips with relative morph targets [smile, wide, round, press] (negative smile = frown).
-  - `materials.tsx`: shared materials via context. `Desk.tsx` (desk, pad, books, lamp spotlight aimed at the paper,
+  - `robotConstants.ts`: all sizes, colours (picked from the reference image), `LIMITS`, `JOINT` names +
+    `armJoint(side)` (`finger(i, segment)`, `thumb(segment)`), `REST_POSE`, `CAMERA`, `DEBUG_VIEWS` (front,
+    threeQuarter, side, portrait (framed like the reference), face, paper). Units are metres; the robot faces +z,
+    its left is +x.
+  - `pose.ts`: `RobotPose` (spine, neck, head, gaze, lids 0 open–1 closed (upper < 0 = wide), brows raise/tilt, mouth
+    open/smile/wide/round/press, armL/armR {shoulder, elbow, wrist, curl, thumb}, breath, shrug). `collectRig()`
+    finds joints and the `face`/`lid-*` meshes by name once; `applyPose()` writes joints and the face's morph
+    influences (indices from `MORPH_NAMES` / `LID_MORPHS`); `applyEyes()` re-writes eyes and lid morphs after the look-at.
+  - `Robot.tsx` assembles waist → spine → torso + chest (breath lifts it) → neck → head, and two arms; the stomach
+    core's back panel (`chest-panel`) glows in the emotion colour × voice loudness (`glowChest`). Parts in `parts/`:
+    `Head` (skin mesh, `Eye` ×2, `Mouth`, `EarDisc` ×2, `ScalpSeams`), `Eye` (glossy eyeball with a painted iris that
+    turns; eyelid ring mesh with blink morphs), `Mouth` (dark inside, upper teeth, lower teeth on the `jaw` group),
+    `HeadDetails` (stepped ear discs, seams + screws projected onto the skin with `skinPoint`), `Neck` (segmented
+    column, core, 8 glossy cables with metal rings), `Torso` (dark lathe body, bent armour plates from `PLATES`, mirrored
+    with `BothSides`; slatted core over the glow panel; pistons; screws via `plateSurface`), `Arm` (shoulder cap
+    dome in two pieces, ring bearing, two-piece upper-arm and forearm shells over dark cores, elbow axle + piston,
+    wrist cuff; the right arm's shells are mirrored by scale), `Hand` (black palm, white back plate, 4 three-part
+    fingers + three-part thumb, `grip` group unchanged at (0, −0.072, −0.026)).
+  - `shapes.ts`: `armorPlate` (outline → extrude with bevel → `TessellateModifier` → bend → `toCreasedNormals`),
+    `shellPiece` (thick lathe piece over part of a turn), `cable` (tube along a curve), `roundedOutline`.
+  - **`face/`** (plain TS, no React, no `@/` imports): `landmarks.ts` (`FACE`: eyes, mouth, jaw hinge, ears),
+    `sdf.ts` (ellipsoids stored as `Float64Array` with inverse radii, round cones, smooth union), `headSdf.ts` (the
+    head sculpted from ~25 shapes; early-outs skip the face shapes at the back/top; eye bulge + almond hole),
+    `eyeShape.ts` (`OPENING`, sideways `stretch` so the opening is wider than the eyeball, `eyePoint`/`eyeAngles`),
+    `headMesh.ts` (`buildHeadMesh`: rays from two start points (eye level for the upper face, behind the mouth for
+    the lower face, so overhangs never hide skin), false-position root finding, mouth line cut as a duplicated row,
+    lips rolled inward, SDF normals, `skinPoint`), `faceMorphs.ts` (`MORPH_NAMES`: jawOpen, smile, wide, round,
+    press, browRaise, browInnerUp, browDown, eyesWide; `JAW_OPEN` 0.15 rad), `skinColor.ts` (vertex colours from the
+    reference: skin, lips, brows, nostrils, crease shading from the SDF, dark neck under the jaw), `eyelids.ts`
+    (ring mesh around the opening, crisp edge, outer rings tuck under the skin = crease; morphs upperClose,
+    lowerClose, upperWide), `headWorker.ts` + `loadHead.ts` (built once per page in a Web Worker, about 1–1.5 s;
+    falls back to the main thread). The head group stays hidden until the skin arrives.
+  - The arm angles in `KEY_POSES` came from the IK search; the read pose was re-solved for the lower human eye
+    height (page centre y 1.135) so the face stays above the page.
+  - `materials.tsx`: shared materials via context (armor, mech, cable, metal, screw, skin (vertex colours, sheen),
+    eye (iris painted on a canvas), mouthInside, teeth, core (emissive)). `Desk.tsx` (desk, pad, books, lamp spotlight aimed at the paper,
     warm point light for the face). `Paper.tsx`: group named `paper` (ref passed in); Tamil drawn on a 2D canvas in
     Anek Tamil (`--font-anek-tamil` on `<html>`, after `document.fonts.load`), redrawn live from `input`. The text
     **faces the robot** (`PAPER_ON_DESK` turn + π), so from the camera it is upside down on the desk; the back
@@ -168,7 +199,19 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
     `lookPaper` + `readU/readV` (reading spot on the page), `lookCamera`, `follow` (mouse), `gesture` (free left hand).
     Parts start one after another (`MOTION.lead`: eyes 0, head 0.15 s, spine 0.24 s; shoulder → elbow → wrist → hand),
     never linear easing; wrist uses `back.out` for follow-through. timeScale = presenter speed × emotion tempo.
-  - `useRobotTimeline.ts`: follows the store (stage → scene: understanding/handoff/speaking = read, playing = speak,
+  - **Review changes (Phase 7):** two paper holds in `PAPER_HOLD` (`pickUp`: hand on top, from the desk; `read`:
+    bottom corner, thumb on the text side, fingers behind, palm toward the robot). Cue `regrip` blends between them
+    (during the lift, and back during put-back); `placePaper` lerps the hold. Wrist twist goes up to ±3.1 rad (a ball
+    joint) for the read grip. Scene `think` (stage `speaking`): the right hand lowers the page (`thinkR`), the left fist
+    goes under the chin (`thinkL`, fist curl 0.62), then the `THINKING` beat loop (look away, finger tap, glance at
+    the page, "hmm" with pursed lips, small nod + smile) animates gaze/brows/mouth/head channels. Cue `chinRest`
+    scales the emotion's head/body offsets to 0 so the chin stays on the hand. Every other scene first tweens
+    `REST_FACE` back. Arm angles came from `rig2.mjs` / `rest.mjs` / `holds2.mjs` (scratchpad): FK with full fingers,
+    rest = no point below the desk and fingertips 1–6 mm above it.
+  - Emotion faces (`emotionPose.ts`) follow FACS: happiness = smile + cheek + parted lips; sadness = frown + inner
+    brows up + heavy lids; anger = brows down + sneer + press; fear = brows up + wide eyes + stretch + open.
+    `expressionLife` adds slow uneven movements (chin quiver, nose-wrinkle bursts, eye darts).
+  - `useRobotTimeline.ts`: follows the store (stage → scene: understanding/handoff = read, speaking = think, playing = speak,
     done = putBack, idle/error = rest; `runId` restarts read, `speakRequest` restarts speak). `onReady` calls
     `markRobotReady(request)`. ?debug=1 "Act" buttons play scenes by hand (`DebugScene`).
   - Key poses in `robotConstants.ts` (`KEY_POSES`, `PAPER_HOLD`, `CHOREO`, `READING`, `LIP_SYNC`, `IDLE`). Arm angles
@@ -203,8 +246,9 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
 - `examples/*.json` are request bodies for curl; `next.config.ts` sets `devIndicators: false`.
 
 ## Testing and tooling notes
-- Next 16 allows only **one** `next dev` per project (lockfile). The user usually has one running (last seen on
-  http://localhost:3000; earlier on 3001, so check `/api/health` on both). Test against it, or `npm run build` then `node node_modules/next/dist/bin/next start -p 3100`
+- Next 16 allows only **one** `next dev` per project (lockfile). The user usually has one running (seen on
+  http://localhost:3000 and 3001; check `/api/health` returns `{"backend":…}`. On 2026-10-07 port 3000 was serving a
+  different project of the user's, so never assume 3000 is this app). Test against it, or `npm run build` then `node node_modules/next/dist/bin/next start -p 3100`
   (allowed alongside dev). Never kill the user's dev server.
 - Browser checks: `playwright-core` driving installed Chrome (`channel: "chrome"`, args `--enable-unsafe-swiftshader
   --use-angle=swiftshader --autoplay-policy=no-user-gesture-required`). WebGL renders in software, so the first
@@ -236,7 +280,10 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
   8×8×2×2 = 256, 16 kHz, 58 symbols, one speaker in the base checkpoint (speaker table + emotion lane = fine-tuning).
 - **Phase 5, robot model:** done (see "Robot scene" above).
 - **Phase 6, motion:** done (see "Robot motion" above).
-- **Phase 7, polish:** loading, empty and error states; keyboard; reduced motion; checks at 375/768/1280/1920; the full
+- **Phase 7, new robot look:** done (see "Robot scene" above). Face previews were iterated with a Node script
+  that imports the `face/` TS files (`node --import register.mjs --experimental-strip-types`, a resolve hook adds
+  `.ts`) and a tiny software rasteriser; scratchpad only.
+- **Phase 8, polish:** loading, empty and error states; keyboard; reduced motion; checks at 375/768/1280/1920; the full
   README with "How to connect the real models"; zero lint warnings.
 
 ## Design rules ("The Reading Room")
