@@ -26,6 +26,8 @@ const ROWS = 150; // bottom to top
 /** Ray start points: behind the mouth for the lower face, at eye level for the upper face. */
 const LOW: [number, number, number] = [0, 0.035, 0.015];
 const HIGH: [number, number, number] = [0, 0.075, 0];
+/** Where skinPoint's rays start (eye level, in the middle of the head). */
+export const SKIN_ORIGIN = HIGH;
 const originAt = (phi: number): [number, number, number] => {
   const t = smoothstep(-0.12, 0.3, phi);
   return [0, LOW[1] + (HIGH[1] - LOW[1]) * t, LOW[2] + (HIGH[2] - LOW[2]) * t];

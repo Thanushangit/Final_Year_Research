@@ -2,12 +2,22 @@
 import { useEffect, useRef } from "react";
 import { audioEngine } from "@/lib/audio/audioEngine";
 import { BERT_STEP_COUNT, VITS_STEP_COUNT, usePipelineStore } from "@/store/pipelineStore";
-import { BERT_DWELL_MS, PACKET_MS, ROBOT_INTRO_MS, ROBOT_WAIT_MAX_MS, VITS_DWELL_MS } from "./timing";
+import {
+  BERT_DWELL_MS,
+  PACKET_MS,
+  ROBOT_INTRO_MS,
+  ROBOT_WAIT_MAX_MS,
+  SEND_SHOW_MS,
+  SLIDE_MS,
+  VITS_DWELL_MS,
+  VOICE_SHOW_MS,
+} from "./timing";
 
 export function usePipelineDirector(): void {
   const mode = usePipelineStore((s) => s.mode);
   const speed = usePipelineStore((s) => s.speed);
   const stage = usePipelineStore((s) => s.stage);
+  const view = usePipelineStore((s) => s.view);
   const bertStep = usePipelineStore((s) => s.bertStep);
   const vitsStep = usePipelineStore((s) => s.vitsStep);
   const emotion = usePipelineStore((s) => s.emotion);
@@ -19,13 +29,14 @@ export function usePipelineDirector(): void {
   const revealedAt = useRef(0);
   const startedFor = useRef(0);
 
-  // Remember when the current step appeared, so Auto mode waits the right amount of time
-  // even when the step was shown before the model's answer arrived.
+  // Remember when the current step appeared, so Auto mode waits the right amount of time even when the
+  // step was shown before the model's answer arrived.
   useEffect(() => {
     revealedAt.current = performance.now();
   }, [bertStep, vitsStep, runId]);
 
-  // Auto mode: show the next step once the current one has been on screen long enough.
+  // Auto mode: show the next step once the current one has been shown long enough. The steps run in
+  // the background whether or not their process screen is open; opening it just lets you watch.
   useEffect(() => {
     if (mode !== "auto") return;
     const inBert = stage === "understanding" && emotion !== null && bertStep < BERT_STEP_COUNT - 1;
@@ -37,15 +48,31 @@ export function usePipelineDirector(): void {
     return () => window.clearTimeout(timer);
   }, [mode, stage, bertStep, vitsStep, emotion, tts, speed]);
 
+  // "Send to VITS" has been shown: slide back to the robot, where the packet travels to VITS.
+  useEffect(() => {
+    if (stage !== "handoff" || view === "robot") return;
+    const timer = window.setTimeout(() => usePipelineStore.getState().closeView(), SEND_SHOW_MS / speed);
+    return () => window.clearTimeout(timer);
+  }, [stage, view, speed]);
+
   // Safety net: if the packet animation never reports back, arrive anyway.
   useEffect(() => {
-    if (stage !== "handoff") return;
+    if (stage !== "handoff" || view !== "robot") return;
     const timer = window.setTimeout(
       () => usePipelineStore.getState().arriveAtVits(),
-      PACKET_MS / usePipelineStore.getState().speed + 2000,
+      SLIDE_MS + PACKET_MS / usePipelineStore.getState().speed + 2000,
     );
     return () => window.clearTimeout(timer);
-  }, [stage, runId]);
+  }, [stage, view, runId]);
+
+  // "Output voice" has been shown: slide back to the robot, which speaks the voice. (Sooner if the VITS
+  // screen isn't open.)
+  useEffect(() => {
+    if (stage !== "speaking" || !tts || vitsStep !== VITS_STEP_COUNT - 1) return;
+    const wait = (view === "vits" ? VOICE_SHOW_MS : 600) / speed;
+    const timer = window.setTimeout(() => usePipelineStore.getState().deliverVoice(), wait);
+    return () => window.clearTimeout(timer);
+  }, [stage, view, tts, vitsStep, speed]);
 
   // Load the voice as soon as VITS answers, so it is ready to play.
   useEffect(() => {

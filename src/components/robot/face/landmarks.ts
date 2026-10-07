@@ -10,7 +10,7 @@ export const FACE = {
   /** The jaw opens around this sideways axis (just in front of the ears). */
   jawHinge: [0, 0.036, -0.004] as V3,
   /** The black ear discs: centre and radius. */
-  ear: { x: 0.068, y: 0.066, z: -0.004, radius: 0.036 },
+  ear: { x: 0.075, y: 0.066, z: -0.004, radius: 0.036 },
   /** Below this height the skin ends and the black neck shows. */
   chinBottom: -0.046,
 };

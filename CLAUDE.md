@@ -17,7 +17,29 @@ Full brief: `claude-code-prompt-tamil-tts-dashboard.md`. Progress checklist: `PR
   first review: fuller cheeks / square jaw, new face shapes (frown, sneer, stretch, cheek) for human emotion faces
   with small "expression life" movements, hands resting on the desk (re-solved), the reading grip (thumb in front,
   fingers behind, bottom corners), a cream paper colour, and a new "think" scene for the VITS stage.
-- **Next:** Phase 8, polish and handover. See "Plan for the remaining phases" below.
+  Second review (close-up crops): head widened ~9% (cranium rx 0.082, ears at x 0.075), softer brow ridge and
+  ash-brown feathered brows, resting lids 0.15, deeper eye shading, thinner upper lip, smaller nose wings; raised
+  side plates on the skull (`sidePlate` in `HeadDetails.tsx`, laid onto the skin with `skinPoint` from
+  `SKIN_ORIGIN`) with dark edge seams and a jaw-edge seam; fingers = black barrel joints + white rounded boxes
+  (`JOINT_GAP`), two back-of-hand plates; shoulder caps split front/back by a seam; `?debug=1` "Hands" view.
+- **All phases done (2026-10-07).** Phase 8 approved, plus the study room, navy executive chair, arrows only while a
+  signal travels, steps running in the background and the auto-scrolling step row. Phase 9 (polish and handover)
+  done: an error on the robot screen shows the message + Try again / Try another sentence (`StageFlow` `ErrorActions`);
+  keyboard, reduced motion and a dead-backend (502) run checked; full `README.md` with screenshots in
+  `docs/screenshots/` (taken with `readme.mjs` in the scratchpad at 1440×900); `npm run build` and
+  `npx eslint . --max-warnings=0` clean. Any new work is a change request from the user.
+- Phase 7 approved ("almost correct"). **Phase 8 (done): robot-first stage layout.** The stage shows only
+  the robot (full screen) with a tracker at the top (IndicBERT → VITS → Robot, `stage/StageFlow.tsx` +
+  `stage/flowState.ts`), "IndicBERT Process" (bottom left) and "VITS Process" (bottom right) buttons, and the flow
+  line between them (`SignalPath.tsx`, re-measured from `bert-button` / `vits-button` / `robot`). `LabPanel` is now a
+  full-screen process screen that slides over the robot (IndicBERT from the left, VITS from the right), stays mounted
+  (inert when closed), has "Back to robot" + Esc, a step overview row, and the `StepCard`s in one horizontal row
+  joined by arrows. Store `view` ("robot" | "indicbert" | "vits"), `openView`, `closeView`, `deliverVoice`.
+  **Changed by the user later:** steps run in the background whatever screen is open (Auto timers ignore `view`;
+  Next step advances from any screen; the process buttons only open a screen to watch). After "Send to VITS"
+  (`SEND_SHOW_MS`) and "Output voice" (`VOICE_SHOW_MS`) an open screen slides back by itself. Old polish phase is
+  now Phase 9.
+- **Study room (user's `study_table_with_robot.png` reference):** see "Study room" under Architecture.
 - Last check (Phase 7): `npm run build` and `npx eslint . --max-warnings=0` both clean. Browser checks: Portrait and
   face close-up views, every face test pose, the five emotion faces, pick-up/reading/speaking poses, a full run to
   "finished", and the production build (`next start -p 3100`, head built in the worker). About 190k triangles.
@@ -58,7 +80,9 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
   which can be longer (numbers become words), so `TtsTextSchema` allows 2000.
 
 ## Workflow rules
-- Work phase by phase (0–8). After each phase run `npm run build` and `npm run lint`, fix everything, summarise in
+- **Laptop only (user's instruction, 2026-10-07):** the demo is used on a laptop, never on a phone or tablet. Do not
+  spend time on responsive / mobile / tablet layouts or phone-size screenshots. Test at laptop sizes (1280–1920 wide).
+- Work phase by phase (0–9, all done; new work comes as change requests). After each phase run `npm run build` and `npm run lint`, fix everything, summarise in
   plain simple English, list what to check in the browser, then **STOP** until the user says `continue`.
 - The user wants visible progress: tick items in `PROGRESS.md` as soon as each one is done, give a short plain-English
   update between steps, and paste the checklist at every stop.
@@ -87,10 +111,12 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
 - `src/app/page.tsx` renders `components/stage/StageLayout.tsx` (client). One route; `stage === "idle"` shows the
   input screen, anything else shows the stage. `RobotFrame` is always the **first child** of `<main>` so the WebGL
   canvas is never rebuilt. `MotionConfig reducedMotion="user"` wraps everything.
-- **Layout:** CSS grid areas. Input: `robot / form`. Stage below 1280 px: `robot / bert / vits` with the robot pinned
-  under the header (`max-xl:tall:sticky`, `tall` = min-height 640px custom variant). Stage from 1280 px:
-  `bert robot vits`, fixed height `100dvh - header - controls`, panels scroll inside, 40px bottom padding for the bus line.
-  CSS vars in `globals.css`: `--header-h` 3.5rem, `--controls-h` 4.25rem (6.5rem under 768px), `--sticky-robot-h`.
+- **Layout (Phase 8):** CSS grid areas. Input: `robot / form`. Stage: one area `robot`, fixed height
+  `100dvh - header - controls` (`STAGE_GRID` in `StageLayout.tsx`). Render order: `RobotFrame`, `InputForm`,
+  `StageFlow` (tracker at the top + "IndicBERT Process" / "VITS Process" buttons in the bottom corners, `inert` while
+  a screen is open; texts from `flowState.ts`; on an error it shows the message with Try again / Try another
+  sentence), `SignalPath`, `IndicBertPanel`, `VitsPanel` (both always mounted). CSS vars in `globals.css`:
+  `--header-h` 3.5rem, `--controls-h` 4.25rem (6.5rem under 768px). `.flow-dashes` and `.attention-pulse` animations.
 - **Store** `src/store/pipelineStore.ts` (zustand). State: `input, speakerId, textError, speakerError, stage, emotion,
   tts, error {panel, message}, bertStep, vitsStep, mode, speed, runId, speakRequest, pendingNext, voiceBlocked, backend`.
   Actions: `setInput, setSpeaker, setMode, setSpeed, setVoiceBlocked, loadBackend, submit, advance, requestNext,
@@ -100,19 +126,28 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
   `arriveAtVits` → `speaking` (vitsStep 0; steps ≥1 need `tts`) → vitsStep 7 → `playing` (`speakRequest++`) →
   audio `ended` → `done`. Any API failure → `error` with the failing panel. `replay` keeps results and restarts
   (`runId++`, no API calls). `requestNext` queues (`pendingNext`) if data hasn't arrived. `reset` keeps input/speaker.
-- **Director** `components/stage/usePipelineDirector.ts`: Auto-mode timers (dwell minus time already shown),
+- **Director** `components/stage/usePipelineDirector.ts`: Auto-mode timers (dwell minus time already shown; run
+  whichever screen is open), closes an open screen after `SEND_SHOW_MS` / `VOICE_SHOW_MS`, `deliverVoice` timer,
   handoff safety timeout, loads the voice when `tts` arrives, plays it `ROBOT_INTRO_MS / speed` after `playing`,
   stops audio when leaving, `ended` → `finishSpeaking`. Dwell times: `components/stage/timing.ts`.
-- **SignalPath** `components/stage/SignalPath.tsx`: measures elements by `data-anchor` (`indicbert`, `vits`, `robot`,
-  `bert-send` = IndicBERT step 10, `vits-inputs` = VITS step 1). Wide: a bracket "bus" under the three columns,
-  trip 1 IndicBERT → VITS (packet shows 5 emotion bars), trip 2 VITS → up into the robot. Stacked: trip 1 runs down
-  the left gutter. Packet uses CSS `offset-path`; reduced motion = fade at destination. Trip 1's end calls `arriveAtVits`.
+- **SignalPath** `components/stage/SignalPath.tsx`: measures `data-anchor` elements (`bert-button`, `vits-button`,
+  `robot`; a ResizeObserver watches them all). Trip 1: straight line IndicBERT button → VITS button (packet shows 5
+  emotion bars; its end calls `arriveAtVits`). Trip 2: curve from the VITS button up into the robot's chest (voice
+  glyph). **Each gold line + label shows only while its packet travels** (user's request): trip 1 during `handoff` on
+  the robot screen, trip 2 until the voice packet reports arrival (`voiceArrived === speakRequest`). Packets use CSS
+  `offset-path`, start after `SLIDE_MS` (screen sliding away); reduced motion = fade at destination.
+- **Process screens** `ui/LabPanel.tsx`: full-screen white screen that slides over the robot (IndicBERT from the
+  left, VITS from the right), `inert` + aria-hidden when closed, "Back to robot" (focused on open) + Esc. A
+  `StepOverview` row of numbered pills joined by arrows **auto-scrolls to keep the current step centred**; below it
+  the `StepCard`s sit in one horizontal row joined by `StepArrow`s (gold `flow-dashes` once reached). On opening it
+  scrolls to the current card, or the last card when all steps are done. `scrollToStep` scrolls only the row.
 - **PresenterControls**: Auto/Step, Next step (Space / →), speed 0.5×/1×/2×, Replay (R), Try another sentence
   (in the header below 768px). Keys are ignored while typing. Status line is `aria-live`, shown from 1024px.
 - **UI kit** `components/ui/`: `Button` (primary / secondary / secondaryLight), `SegmentedControl` (native radios),
-  `SampleDataBadge` (dark / light), `StepCard` + `stepStatus()` (pending / waiting / active / done; scrolls into view,
-  again after opening; scroll margins clear the pinned robot and the bar; optional `detail` = "What the model does"
-  note, `aside` = model time), `LabPanel` (white panel shell + badge), `PanelError` (Try again → `retry`).
+  `SampleDataBadge` (dark / light), `StepCard` + `stepStatus()` (pending / waiting / active / done; the active card
+  scrolls to the middle of its row (skipped while the screen is inert); props `id`, `arrow`; optional `detail` = "What
+  the model does" note, `aside` = model time), `LabPanel` (the sliding process screen, see "Process screens"),
+  `PanelError` (Try again → `retry`).
 - **Chart parts** `components/ui/`: `Heatmap` (canvas, DPR-aware, sized from the figure's outer width only so labels
   can't cause a resize loop; fixed 88px label column; row fade-in reveal with delay; hover = crosshair + lifted cell +
   readout line; touch keeps the tapped cell; `selectedRow` outline; sr-only table up to 1200 cells; gaps 2/1/0px by
@@ -140,8 +175,22 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
 - **Heatmap big-grid mode**: `fixedHeightPx` fills the width with fractional cells drawn as one stretched image
   (`ui/heatmapDraw.ts`), `reveal="columns"`, `flipRows`. `lib/audio/wav.ts` has `decodeWav` (moved from the mock),
   `base64ToBytes`, `computePeaks`, `peaksFromBase64Wav`. `lib/mock/spectrogram.ts` exports `melBandCentreHz`.
+- **Study room** `components/robot/room/` (user's study-room reference; bright and warm, background colour = wall):
+  `StudyRoom.tsx` (oak floor, greige wall + skirting, window with a painted blurred-garden view, low walnut cabinet
+  with the big plant, palace photo on the wall, window `directionalLight`), `Bookshelf.tsx` (walnut boards/posts from
+  `STUDY.shelf`, back panel with an emissive canvas glow under each board = the LED strips, emissive strip meshes,
+  one warm `pointLight`; books = one seeded `instancedMesh` + gold bands; `DECOR` slots: bust, globe, canal photo,
+  succulents, placed in the middle bay because the camera sees the wall only up to x ≈ 1.9), `Chair.tsx` (navy
+  leather executive chair: extruded back with rounded top corners, 4 stitched channels + lumbar band, metal-loop
+  armrests, reclined 0.1 rad), `DeskProps.tsx` (book stack with canvas-titled spines from `STUDY.bookTitles`, mug +
+  cork coaster, laptop with a gold waveform screen, pen cup, notebook, sticky notes, succulent), `textures.ts`
+  (canvas textures), `Models.tsx` (`useGLTF` of `public/models/*.glb`, Poly Haven CC0, see `CREDITS.md`; each use is
+  a clone; frame glass meshes (`*_glass`) hidden because they render black without an env map; each model inside
+  its own `Suspense`). Positions/colours in `STUDY` and `COLORS` (`robotConstants.ts`). Models were packed with
+  glTF-Transform (`optimize --texture-compress webp --texture-size 512`) in the scratchpad. Only desk things cast shadows.
+  Lights: ambient 0.5 warm, hemisphere 0.85, cool camera fill, window light, lamp spot + point, shelf point.
 - **Robot scene**: `components/stage/RobotFrame.tsx` (frame + status caption, dynamic import with `ssr: false`) →
-  `components/robot/RobotScene.tsx` (Canvas, lights, floor + wall, baked `ContactShadows` under the desk, `CameraRig`:
+  `components/robot/RobotScene.tsx` (Canvas, lights, `StudyRoom`, baked `ContactShadows` under the desk, `CameraRig`:
   three-quarter view, steps back on narrow frames; `?debug=1` swaps it for `DebugCamera` + `DebugPanel`).
   - `robotConstants.ts`: all sizes, colours (picked from the reference image), `LIMITS`, `JOINT` names +
     `armJoint(side)` (`finger(i, segment)`, `thumb(segment)`), `REST_POSE`, `CAMERA`, `DEBUG_VIEWS` (front,
@@ -283,12 +332,14 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
 - **Phase 7, new robot look:** done (see "Robot scene" above). Face previews were iterated with a Node script
   that imports the `face/` TS files (`node --import register.mjs --experimental-strip-types`, a resolve hook adds
   `.ts`) and a tiny software rasteriser; scratchpad only.
-- **Phase 8, polish:** loading, empty and error states; keyboard; reduced motion; checks at 375/768/1280/1920; the full
-  README with "How to connect the real models"; zero lint warnings.
+- **Phase 8, robot-first layout:** done (see "Layout", "SignalPath", "Process screens", "Study room").
+- **Phase 9, polish and handover:** done (error actions on the robot screen, keyboard + reduced motion + 502 checked
+  with `p9.mjs`, README with screenshots, zero lint warnings). Laptop sizes only.
 
 ## Design rules ("The Reading Room")
-- A robot sits at a desk under a warm lamp. The "understanding" lab (IndicBERT) is on the left and the "speaking" lab
-  (VITS) on the right. A gold data packet travels left, into VITS, then up into the robot.
+- A robot sits at a desk in a bright, warm study (bookshelf, window, plants) under a warm lamp. The "understanding"
+  process (IndicBERT) opens from the bottom left and the "speaking" process (VITS) from the bottom right. A gold data
+  packet travels from IndicBERT to VITS, then up into the robot.
 - Palette tokens are in `src/app/globals.css` (`@theme`):
   - `ink` #0F1C33, `navy` #1B2E50, `gold` #C9A227, `panel` #FFFFFF, `mist` #E7EAF0;
   - `emotion-neutral` #8A94A6, `emotion-happiness` #E3B23C, `emotion-sadness` #4F7CAC, `emotion-anger` #C2453D,

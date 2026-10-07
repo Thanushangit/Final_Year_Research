@@ -8,7 +8,7 @@ import {
   type SpeakerId,
   type TtsResponse,
 } from "@/lib/api/contracts";
-import type { PanelId, PresenterMode, Speed, Stage } from "@/types";
+import type { PanelId, PresenterMode, Speed, Stage, StageView } from "@/types";
 
 export const BERT_STEP_COUNT = 10;
 export const VITS_STEP_COUNT = 8;
@@ -24,6 +24,11 @@ interface PipelineState {
   textError: string | null;
   speakerError: string | null;
   stage: Stage;
+  /**
+   * The robot screen, or a process screen slid over it. The steps run in the background either way;
+   * a process screen only shows them.
+   */
+  view: StageView;
   emotion: EmotionResponse | null;
   tts: TtsResponse | null;
   error: PipelineError | null;
@@ -61,8 +66,14 @@ interface PipelineActions {
   advance: () => boolean;
   /** "Next step" button, Space or →: advance now, or as soon as the model answers. */
   requestNext: () => void;
-  /** The packet has reached the VITS panel. */
+  /** Slides a process screen over the robot. */
+  openView: (view: PanelId) => void;
+  /** Back to the robot screen. */
+  closeView: () => void;
+  /** The packet has reached VITS (on the robot screen, the "VITS Process" button). */
   arriveAtVits: () => void;
+  /** VITS has shown its last step: back to the robot screen, and the robot speaks. */
+  deliverVoice: () => void;
   /** Speak the voice (again). */
   playVoice: () => void;
   /** The voice has finished playing. */
@@ -125,6 +136,7 @@ export const usePipelineStore = create<PipelineStore>()((set, get) => {
     textError: null,
     speakerError: null,
     stage: "idle",
+    view: "robot",
     emotion: null,
     tts: null,
     error: null,
@@ -211,12 +223,8 @@ export const usePipelineStore = create<PipelineStore>()((set, get) => {
       }
       if (state.stage === "speaking") {
         if (!state.tts || state.vitsStep >= VITS_STEP_COUNT - 1) return false;
-        const vitsStep = state.vitsStep + 1;
-        set(
-          vitsStep === VITS_STEP_COUNT - 1
-            ? { vitsStep, stage: "playing", speakRequest: state.speakRequest + 1 }
-            : { vitsStep },
-        );
+        // The last step ("Output voice") stays on screen for a moment; then deliverVoice() hands over.
+        set({ vitsStep: state.vitsStep + 1 });
         return true;
       }
       return false;
@@ -225,25 +233,38 @@ export const usePipelineStore = create<PipelineStore>()((set, get) => {
     requestNext: () => {
       const state = get();
       if (state.stage === "handoff") {
-        state.arriveAtVits(); // skip the rest of the packet's journey
+        // Skip the wait: first back to the robot screen, then the rest of the packet's journey.
+        if (state.view !== "robot") state.closeView();
+        else state.arriveAtVits();
         return;
       }
+      // The steps move on whichever screen is open; the process buttons only open a screen to watch.
+      if (state.stage === "speaking" && state.tts && state.vitsStep === VITS_STEP_COUNT - 1) return state.deliverVoice();
       if (state.advance()) return;
       const waiting =
         (state.stage === "understanding" && !state.emotion) || (state.stage === "speaking" && !state.tts);
       if (waiting) set({ pendingNext: true });
     },
 
+    openView: (view) => set({ view }),
+    closeView: () => set({ view: "robot" }),
+
     arriveAtVits: () => {
       if (get().stage !== "handoff") return;
       set({ stage: "speaking", vitsStep: 0 });
-      flushPendingNext();
     },
 
+    deliverVoice: () => {
+      const state = get();
+      if (state.stage !== "speaking" || !state.tts || state.vitsStep < VITS_STEP_COUNT - 1) return;
+      set({ view: "robot", stage: "playing", speakRequest: state.speakRequest + 1 });
+    },
+
+    // "Play voice" (again): back to the robot screen, so the robot can be seen speaking.
     playVoice: () => {
       const state = get();
       if (!state.tts) return;
-      set({ stage: "playing", speakRequest: state.speakRequest + 1, voiceBlocked: false });
+      set({ view: "robot", stage: "playing", speakRequest: state.speakRequest + 1, voiceBlocked: false });
     },
 
     finishSpeaking: () => {
@@ -253,9 +274,11 @@ export const usePipelineStore = create<PipelineStore>()((set, get) => {
     replay: () => {
       const state = get();
       if (!state.emotion) return;
+      // The story starts again from the robot screen.
       set({
         runId: state.runId + 1,
         stage: "understanding",
+        view: "robot",
         bertStep: 0,
         vitsStep: -1,
         error: null,
@@ -267,7 +290,8 @@ export const usePipelineStore = create<PipelineStore>()((set, get) => {
     retry: () => {
       const state = get();
       if (state.error?.panel === "vits" && state.emotion) {
-        set({ stage: "handoff", error: null, tts: null });
+        // The five values travel to VITS again, on the robot screen.
+        set({ stage: "handoff", view: "robot", error: null, tts: null });
         void requestSpeech(session);
       } else {
         void state.submit();
@@ -280,6 +304,7 @@ export const usePipelineStore = create<PipelineStore>()((set, get) => {
       session++;
       set({
         stage: "idle",
+        view: "robot",
         emotion: null,
         tts: null,
         error: null,

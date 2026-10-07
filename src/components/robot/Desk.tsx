@@ -12,31 +12,7 @@ function Wood({ color = COLORS.wood, roughness = 0.62 }: { color?: string; rough
   return <meshStandardMaterial color={color} roughness={roughness} />;
 }
 
-/** A small stack of books at the far end of the desk. */
-function Books() {
-  const books = [
-    { size: [0.24, 0.045, 0.17], color: "#7a2e2a", y: 0 },
-    { size: [0.22, 0.04, 0.16], color: COLORS.navy, y: 0.0425 },
-    { size: [0.2, 0.035, 0.15], color: "#2f4a3e", y: 0.08 },
-  ] as const;
-  return (
-    <group position={ROOM.books.position} rotation={[0, 0.25, 0]}>
-      {books.map((book) => (
-        <group key={book.color} position={[0, book.y + book.size[1] / 2, 0]}>
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={book.size} />
-            <meshStandardMaterial color={book.color} roughness={0.7} />
-          </mesh>
-          {/* A gold line on the spine. */}
-          <mesh position={[0, 0, book.size[2] / 2 + 0.0005]}>
-            <planeGeometry args={[book.size[0] * 0.8, 0.004]} />
-            <meshStandardMaterial color={COLORS.gold} metalness={0.8} roughness={0.35} />
-          </mesh>
-        </group>
-      ))}
-    </group>
-  );
-}
+const LAMP_BLACK = "#1f1e1d";
 
 /** The lamp on the desk and the warm spotlight it throws onto the paper. */
 function Lamp() {
@@ -55,7 +31,7 @@ function Lamp() {
       <group position={[x, y, z]}>
         <mesh position={[0, 0.012, 0]} castShadow>
           <cylinderGeometry args={[0.09, 0.1, 0.025, 32]} />
-          <meshStandardMaterial color={COLORS.navy} metalness={0.3} roughness={0.5} />
+          <meshStandardMaterial color={LAMP_BLACK} metalness={0.3} roughness={0.45} />
         </mesh>
         <mesh position={[0, 0.42, 0]} castShadow>
           <cylinderGeometry args={[0.012, 0.012, 0.82, 16]} />
@@ -65,7 +41,7 @@ function Lamp() {
         <group position={[-0.05, 0.83, 0.04]} rotation={[-0.3, 0, -0.55]}>
           <mesh castShadow>
             <cylinderGeometry args={[0.035, 0.11, 0.13, 32, 1, true]} />
-            <meshStandardMaterial color={COLORS.navy} side={DoubleSide} metalness={0.3} roughness={0.5} />
+            <meshStandardMaterial color={LAMP_BLACK} side={DoubleSide} metalness={0.3} roughness={0.45} />
           </mesh>
           <mesh position={[0, -0.03, 0]}>
             <sphereGeometry args={[0.035, 16, 16]} />
@@ -91,7 +67,7 @@ function Lamp() {
   );
 }
 
-/** A walnut writing desk with a front panel (so nothing shows underneath), a leather pad and books. */
+/** A walnut writing desk with a front panel (so nothing shows underneath), a leather pad and the lamp. */
 export function Desk() {
   return (
     <group>
@@ -114,7 +90,6 @@ export function Desk() {
         <planeGeometry args={[0.95, 0.5]} />
         <meshStandardMaterial color={COLORS.leather} roughness={0.85} />
       </mesh>
-      <Books />
       <Lamp />
     </group>
   );

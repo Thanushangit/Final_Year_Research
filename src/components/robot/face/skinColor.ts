@@ -11,10 +11,10 @@ type Rgb = [number, number, number];
 const SKIN: Rgb = [232, 224, 220];
 const SOCKET: Rgb = [206, 192, 186];
 const WARM: Rgb = [228, 206, 200];
-const LIP_UPPER: Rgb = [192, 156, 146];
-const LIP_LOWER: Rgb = [208, 174, 164];
+const LIP_UPPER: Rgb = [196, 164, 154]; // pale, as in the reference
+const LIP_LOWER: Rgb = [212, 182, 172];
 const LIP_LINE: Rgb = [92, 60, 54];
-const BROW: Rgb = [112, 96, 86];
+const BROW: Rgb = [128, 112, 102]; // ash brown, as in the reference
 const NOSTRIL: Rgb = [70, 50, 46];
 const NECK: Rgb = [36, 34, 33];
 
@@ -44,7 +44,7 @@ function lipAmount(x: number, y: number, z: number, slitY: number): { upper: num
   const hw = FACE.mouth.halfWidth;
   const ax = Math.abs(x);
   const across = Math.max(0, 1 - (ax / (hw * 1.04)) ** 2);
-  const bow = 0.0078 - 0.0013 * gauss(x * x, 0.0024) + 0.0009 * gauss((ax - 0.0065) ** 2, 0.003);
+  const bow = 0.0064 - 0.0013 * gauss(x * x, 0.0024) + 0.001 * gauss((ax - 0.0065) ** 2, 0.003);
   const top = slitY + bow * across ** 0.55;
   const bottom = slitY - 0.0098 * across ** 0.5;
   const front = smoothstep(0.078, 0.088, z);
@@ -61,8 +61,9 @@ function browAmount(x: number, y: number, z: number): number {
   const along = (ax - 0.009) / 0.051; // 0 at the inner end, 1 at the tail
   if (along < -0.1 || along > 1.1) return 0;
   const line = 0.0935 + 0.0035 * Math.max(0, 1 - ((ax - 0.034) / 0.03) ** 2) - 0.0015 * along;
-  const half = 0.0042 - 0.0018 * along;
-  return smoothstep(half + 0.0012, half - 0.0006, Math.abs(y - line)) * smoothstep(-0.1, 0.08, along) * smoothstep(1.1, 0.85, along) * smoothstep(0.06, 0.078, z);
+  const half = 0.0034 - 0.0016 * along;
+  // Soft edges, like hair thinning out, rather than a painted band.
+  return smoothstep(half + 0.0022, half - 0.0012, Math.abs(y - line)) * smoothstep(-0.1, 0.08, along) * smoothstep(1.1, 0.85, along) * smoothstep(0.06, 0.078, z);
 }
 
 export function paintSkin(positions: Float32Array, normals: Float32Array, infos: VertexInfo[], colors: Float32Array): void {
@@ -80,7 +81,9 @@ export function paintSkin(positions: Float32Array, normals: Float32Array, infos:
 
     // Warmth on the nose tip and cheeks, a soft shadow in the eye sockets.
     mix(c, WARM, 0.45 * gauss(x * x + (y - 0.036) ** 2 + (z - 0.115) ** 2, 0.008) + 0.25 * gauss((ax - 0.04) ** 2 + (y - 0.045) ** 2 + (z - 0.08) ** 2, 0.012));
-    mix(c, SOCKET, 0.55 * gauss((ax - E.x) ** 2 + (y - 0.084) ** 2 + (z - 0.087) ** 2, 0.0065));
+    // Deep-set eyes: a shadowed lid crease above each eye and a soft darkness all round it.
+    mix(c, SOCKET, 0.7 * gauss((ax - E.x) ** 2 + (y - 0.084) ** 2 + (z - 0.087) ** 2, 0.0065));
+    mix(c, SOCKET, 0.35 * gauss((ax - E.x) ** 2 + (y - E.y) ** 2 + (z - 0.085) ** 2, 0.011));
 
     const lips = lipAmount(x, y, z, info.slitY);
     mix(c, LIP_UPPER, lips.upper * 0.9);

@@ -21,10 +21,31 @@ export const COLORS = {
   woodDark: "#3f2a1c",
   leather: "#23463c",
   paper: "#f1e3c2", // warm cream, so the page stands apart from the robot's cool white fingers
-  floor: "#0d1729",
-  wall: "#1a2b4c",
+  floor: "#4a3426", // oak floorboards
+  wall: "#c9b8a2", // warm greige plaster, as in the study-room reference
+  shelfWood: "#4b3020",
+  shelfGlow: "#ffc98a", // the LED strips under each shelf
+  window: "#f6f1e4",
+  chair: "#23396a", // navy leather, as in the chair reference
   lampLight: "#ffd6a0",
 } as const;
+
+/**
+ * The study room around the desk (from the study-room reference): a lit walnut bookshelf behind the robot,
+ * a window, a framed picture and a big plant on a low cabinet to the left. Metres; the back wall faces +z.
+ */
+export const STUDY = {
+  wallZ: -1.45,
+  /** Board heights (tops) and upright positions; no upright sits right behind the robot's head. */
+  shelf: { depth: 0.34, boards: [0.06, 0.62, 1.04, 1.46, 1.88, 2.3] as const, posts: [-0.8, 0.4, 1.6, 2.8] as const },
+  window: { centre: [-2.3, 1.45] as const, size: [0.9, 1.3] as const },
+  picture: { position: [-1.36, 1.42] as const, scale: 0.9 },
+  cabinet: { centre: [-1.75, -1.2] as const, size: [1.3, 0.62, 0.42] as const },
+  /** Executive chair: the back from the seat (bottom) up to about ear height, reclined a little (radians). */
+  chair: { z: -0.82, width: 0.68, bottom: 0.6, height: 0.82, recline: 0.1 },
+  /** Titles on the stack of books at the left end of the desk (bottom first). */
+  bookTitles: ["Natural Language Processing", "Speech Synthesis", "Robotics", "Artificial Intelligence"] as const,
+};
 
 /** Where things sit in the room. */
 export const ROOM = {
@@ -101,7 +122,8 @@ export const REST_POSE: RobotPose = {
   neck: [0.04, 0.06, 0],
   head: [0.05, 0.1, 0.02],
   gaze: { yaw: 0.1, pitch: 0.02 },
-  lids: { upper: 0.06, lower: 0.03 },
+  lids: { upper: 0.15, lower: 0.04 }, // relaxed, slightly heavy lids that cover the top of the iris
+
   brows: { raise: 0, tilt: 0.04 },
   mouth: { open: 0, smile: 0.12, wide: 0, round: 0, press: 0, frown: 0, sneer: 0, stretch: 0, cheek: 0 },
   // Hands lying on the desk: palms down, fingers relaxed with their tips just touching the wood
@@ -380,7 +402,7 @@ export const CAMERA = {
   fitWidth: 1.5,
 };
 
-export type CameraView = "front" | "threeQuarter" | "side" | "portrait" | "face" | "paper";
+export type CameraView = "front" | "threeQuarter" | "side" | "portrait" | "face" | "hands" | "paper";
 
 /** The angles offered in ?debug=1: three around the robot, a portrait like the reference image, and close-ups. */
 export const DEBUG_VIEWS: Record<CameraView, { label: string; position: readonly [number, number, number]; target: readonly [number, number, number] }> = {
@@ -389,6 +411,7 @@ export const DEBUG_VIEWS: Record<CameraView, { label: string; position: readonly
   side: { label: "Side", position: [2.7, 1.3, -0.4], target: [0, 1.05, -0.35] },
   portrait: { label: "Portrait", position: [0, 1.2, 1.0], target: [0, 1.13, -0.45] },
   face: { label: "Face close-up", position: [0.06, 1.33, 0.26], target: [0, 1.3, -0.38] },
+  hands: { label: "Hands", position: [0.32, 1.02, 0.22], target: [0.12, 0.77, -0.16] },
   // Over the robot's left shoulder: the page faces the robot, so this is the side the text reads from.
   paper: { label: "Paper", position: [0.3, 1.3, -0.25], target: [0.03, 0.73, 0.08] },
 };

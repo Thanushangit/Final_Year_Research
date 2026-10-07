@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { LabPanel } from "@/components/ui/LabPanel";
+import { LabPanel, stepId } from "@/components/ui/LabPanel";
 import { PanelError } from "@/components/ui/PanelError";
 import { StepCard, stepStatus } from "@/components/ui/StepCard";
 import type { EmotionResponse } from "@/lib/api/contracts";
@@ -72,27 +72,32 @@ export function IndicBertPanel() {
       model="IndicBERT"
       intro="Reads the sentence and works out how it feels."
       source={emotion?.source}
+      steps={BERT_STEPS}
+      current={current}
     >
-      {error?.panel === "indicbert" && <PanelError message={error.message} />}
-      <ol>
-        {BERT_STEPS.map((step, index) => {
-          const timing = STEP_TIMING[index];
-          return (
-            <StepCard
-              key={step.title}
-              number={index + 1}
-              title={step.title}
-              summary={step.summary}
-              detail={step.detail}
-              status={stepStatus(index, current, waiting)}
-              anchor={index === BERT_STEPS.length - 1 ? "bert-send" : undefined}
-              aside={emotion && timing ? `${emotion.timingsMs[timing]} ms` : undefined}
-            >
-              {index === 0 ? <InputStep text={input} /> : emotion && stepView(index, emotion, input, speed)}
-            </StepCard>
-          );
-        })}
-      </ol>
+      {error?.panel === "indicbert" && (
+        <li className="w-[min(36rem,calc(100vw-5rem))] shrink-0">
+          <PanelError message={error.message} />
+        </li>
+      )}
+      {BERT_STEPS.map((step, index) => {
+        const timing = STEP_TIMING[index];
+        return (
+          <StepCard
+            key={step.title}
+            id={stepId("indicbert", index)}
+            number={index + 1}
+            title={step.title}
+            summary={step.summary}
+            detail={step.detail}
+            status={stepStatus(index, current, waiting)}
+            arrow={index < BERT_STEPS.length - 1}
+            aside={emotion && timing ? `${emotion.timingsMs[timing]} ms` : undefined}
+          >
+            {index === 0 ? <InputStep text={input} /> : emotion && stepView(index, emotion, input, speed)}
+          </StepCard>
+        );
+      })}
     </LabPanel>
   );
 }

@@ -1,11 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { LabPanel } from "@/components/ui/LabPanel";
+import { LabPanel, stepId } from "@/components/ui/LabPanel";
 import { PanelError } from "@/components/ui/PanelError";
 import { StepCard, stepStatus } from "@/components/ui/StepCard";
 import type { EmotionResponse, SpeakerId, TtsResponse } from "@/lib/api/contracts";
-import { usePipelineStore } from "@/store/pipelineStore";
+import { VITS_STEP_COUNT, usePipelineStore } from "@/store/pipelineStore";
 import { AudioPlayer } from "./AudioPlayer";
 import { AlignmentStep } from "./steps/AlignmentStep";
 import { ConditioningStep } from "./steps/ConditioningStep";
@@ -89,6 +89,8 @@ export function VitsPanel() {
   const error = usePipelineStore((s) => s.error);
   const speed = usePipelineStore((s) => s.speed);
   const waiting = stage === "speaking" && !tts && vitsStep === 0 ? 1 : null;
+  // Once the voice has gone to the robot, every step here is finished.
+  const current = stage === "playing" || stage === "done" ? VITS_STEP_COUNT : vitsStep;
 
   return (
     <LabPanel
@@ -97,28 +99,33 @@ export function VitsPanel() {
       model="VITS"
       intro="Turns the sentence into a voice with that feeling."
       source={tts?.source}
+      steps={VITS_STEPS}
+      current={current}
     >
-      {error?.panel === "vits" && <PanelError message={error.message} />}
-      <ol>
-        {VITS_STEPS.map((step, index) => (
-          <StepCard
-            key={step.title}
-            number={index + 1}
-            title={step.title}
-            summary={step.summary}
-            detail={step.detail}
-            status={stepStatus(index, vitsStep, waiting)}
-            anchor={index === 0 ? "vits-inputs" : undefined}
-            aside={tts ? stepTiming(index, tts.timingsMs) : undefined}
-          >
-            {emotion && speakerId && (index === 0 ? (
-              <InputsStep text={emotion.normalizedText} speakerId={speakerId} vector={emotion.probabilities} speed={speed} />
-            ) : (
-              tts && stepView(index, tts, emotion, speakerId, speed)
-            ))}
-          </StepCard>
-        ))}
-      </ol>
+      {error?.panel === "vits" && (
+        <li className="w-[min(36rem,calc(100vw-5rem))] shrink-0">
+          <PanelError message={error.message} />
+        </li>
+      )}
+      {VITS_STEPS.map((step, index) => (
+        <StepCard
+          key={step.title}
+          id={stepId("vits", index)}
+          number={index + 1}
+          title={step.title}
+          summary={step.summary}
+          detail={step.detail}
+          status={stepStatus(index, current, waiting)}
+          arrow={index < VITS_STEPS.length - 1}
+          aside={tts ? stepTiming(index, tts.timingsMs) : undefined}
+        >
+          {emotion && speakerId && (index === 0 ? (
+            <InputsStep text={emotion.normalizedText} speakerId={speakerId} vector={emotion.probabilities} speed={speed} />
+          ) : (
+            tts && stepView(index, tts, emotion, speakerId, speed)
+          ))}
+        </StepCard>
+      ))}
     </LabPanel>
   );
 }

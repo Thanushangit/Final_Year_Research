@@ -23,3 +23,6 @@ export type PresenterMode = "auto" | "step";
 export type Speed = 0.5 | 1 | 2;
 
 export type PanelId = "indicbert" | "vits";
+
+/** What the stage screen shows: the robot, or one of the two process screens slid over it. */
+export type StageView = "robot" | PanelId;

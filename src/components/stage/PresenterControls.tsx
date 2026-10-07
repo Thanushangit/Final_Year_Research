@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { VITS_STEPS } from "@/components/vits/vitsSteps";
 import { BERT_STEP_COUNT, VITS_STEP_COUNT, usePipelineStore, type PipelineStore } from "@/store/pipelineStore";
+import { flowState } from "./flowState";
 
 const MODE_OPTIONS = [
   { value: "auto", label: "Auto" },
@@ -21,6 +22,8 @@ const SPEED_OPTIONS = [
 
 /** One line telling the presenter (and screen readers) where the demo is. */
 function statusText(state: PipelineStore): string {
+  // On the robot screen with a process waiting to be opened, say so.
+  if (state.view === "robot" && (state.stage === "understanding" || state.stage === "speaking")) return flowState(state).headline;
   switch (state.stage) {
     case "understanding":
       return `Understanding, step ${state.bertStep + 1} of ${BERT_STEP_COUNT}: ${BERT_STEPS[state.bertStep].title}${

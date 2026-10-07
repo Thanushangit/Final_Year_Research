@@ -4,6 +4,7 @@
 // two-piece white shells over a dark core on the upper arm and forearm, a black elbow mechanism and a
 // white wrist cuff. Joints are groups at their pivots; the right arm's shells are the left's mirrored.
 import { useEffect, useMemo, type ReactNode } from "react";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useRobotMaterials } from "../materials";
 import { BODY, armJoint, type Side } from "../robotConstants";
 import { cable, shellPiece, type Point2 } from "../shapes";
@@ -13,16 +14,22 @@ import { Hand } from "./Hand";
 const CAP_TOP: Point2[] = [[0.001, 0.078], [0.03, 0.074], [0.05, 0.063]];
 const CAP_SIDE: Point2[] = [[0.054, 0.059], [0.073, 0.035], [0.082, 0], [0.084, -0.03]];
 const CAP_OPENING = 1.5; // radians left open underneath, where the upper arm comes out
+const CAP_SEAM = 0.035; // radians of dark gap between the cap's front and back pieces
 const UPPER_ARM: Point2[] = [[0.047, -0.035], [0.054, -0.07], [0.057, -0.11], [0.054, -0.155], [0.047, -0.2], [0.043, -0.222]];
 const FOREARM: Point2[] = [[0.05, -0.025], [0.054, -0.055], [0.051, -0.1], [0.045, -0.16], [0.039, -0.205], [0.037, -0.222]];
 
 function useArmShapes() {
   const shapes = useMemo(() => {
+    // The cap is split into a front and a back piece by a seam running down over it (as in the reference),
+    // and into a top and a side band.
     const capStart = Math.PI / 2 + CAP_OPENING / 2;
     const capLength = Math.PI * 2 - CAP_OPENING;
+    const front = capLength * 0.45 - CAP_SEAM / 2;
+    const back = capLength - front - CAP_SEAM;
+    const piece = (profile: Point2[], start: number, length: number) => shellPiece(profile, 0.009, start, length, 22);
     return {
-      capTop: shellPiece(CAP_TOP, 0.009, capStart, capLength, 40),
-      capSide: shellPiece(CAP_SIDE, 0.009, capStart, capLength, 40),
+      capTop: mergeGeometries([piece(CAP_TOP, capStart, front), piece(CAP_TOP, capStart + front + CAP_SEAM, back)]),
+      capSide: mergeGeometries([piece(CAP_SIDE, capStart, front), piece(CAP_SIDE, capStart + front + CAP_SEAM, back)]),
       // Front and back halves of the upper arm, with thin seams between them.
       upperFront: shellPiece(UPPER_ARM, 0.007, -1.5, 3.0),
       upperBack: shellPiece(UPPER_ARM, 0.007, 1.56, 3.1),

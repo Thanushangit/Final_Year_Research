@@ -8,33 +8,37 @@ const E = FACE.eye;
 
 // Each shape is made once: this function runs a few million times while the head is built.
 const el = (cx: number, cy: number, cz: number, rx: number, ry: number, rz: number) => makeEllipsoid([cx, cy, cz], [rx, ry, rz]);
-const CRANIUM = el(0, 0.108, -0.006, 0.075, 0.09, 0.097);
-const CRANIUM_TOP = el(0, 0.135, -0.015, 0.071, 0.06, 0.085);
-const EAR_LEVEL = el(0, 0.05, -0.018, 0.062, 0.042, 0.074);
-const MID_FACE = el(0, 0.046, 0.04, 0.064, 0.048, 0.057);
-const CHEEKBONE = el(0.041, 0.056, 0.06, 0.021, 0.014, 0.024);
+// A broad, square head as in the reference: the skull, cheeks and jaw are wide; the chin is broad.
+const CRANIUM = el(0, 0.108, -0.006, 0.082, 0.09, 0.097);
+const CRANIUM_TOP = el(0, 0.135, -0.015, 0.077, 0.06, 0.085);
+const EAR_LEVEL = el(0, 0.05, -0.018, 0.069, 0.042, 0.074);
+const MID_FACE = el(0, 0.046, 0.04, 0.069, 0.048, 0.057);
+const CHEEKBONE = el(0.045, 0.056, 0.06, 0.022, 0.014, 0.024);
 // Full cheeks: the soft pad under each eye, and the side of the face filled down to the jaw (no hollows).
-const CHEEK = el(0.03, 0.042, 0.07, 0.025, 0.026, 0.02);
-const CHEEK_SIDE = el(0.039, 0.022, 0.044, 0.024, 0.032, 0.03);
-const JAW = el(0, -0.008, 0.036, 0.052, 0.028, 0.06);
-const JAW_ANGLE: [V3, V3] = [[0.055, -0.008, 0.008], [0.053, 0.03, -0.012]];
-const JAW_LINE: [V3, V3] = [[0.055, -0.011, 0.01], [0.022, -0.033, 0.074]];
-const CHIN = el(0, -0.03, 0.082, 0.027, 0.018, 0.02);
-const BROW = el(0.024, 0.0925, 0.083, 0.03, 0.0095, 0.015);
-const MUZZLE = el(0, 0.009, 0.066, 0.035, 0.028, 0.032);
+const CHEEK = el(0.031, 0.042, 0.07, 0.026, 0.026, 0.02);
+const CHEEK_SIDE = el(0.043, 0.022, 0.044, 0.025, 0.032, 0.03);
+const JAW = el(0, -0.008, 0.036, 0.057, 0.028, 0.06);
+const JAW_ANGLE: [V3, V3] = [[0.061, -0.008, 0.008], [0.059, 0.03, -0.012]];
+const JAW_LINE: [V3, V3] = [[0.061, -0.011, 0.01], [0.025, -0.033, 0.074]];
+const CHIN = el(0, -0.03, 0.082, 0.031, 0.018, 0.02);
+// A soft brow ridge (the reference has no hard shelf over the eyes).
+const BROW = el(0.025, 0.0925, 0.081, 0.03, 0.008, 0.012);
+const MUZZLE = el(0, 0.009, 0.066, 0.036, 0.028, 0.032);
+// A long, straight, fairly narrow nose with a rounded tip and small wings.
 const NOSE_BRIDGE: [V3, V3] = [[0, 0.079, 0.087], [0, 0.042, 0.107]];
-const NOSE_TIP = el(0, 0.0365, 0.1105, 0.0085, 0.0085, 0.0092);
-const NOSE_WING = el(0.0098, 0.0292, 0.0975, 0.005, 0.0048, 0.007);
-const NOSE_BASE = el(0, 0.0275, 0.1025, 0.0062, 0.0042, 0.0088);
-const UPPER_LIP = el(0, 0.0102, 0.0925, 0.016, 0.0066, 0.0112);
-const UPPER_LIP_SIDE = el(0.013, 0.0086, 0.0905, 0.012, 0.0046, 0.009);
-const CUPIDS_BOW = el(0.0058, 0.0128, 0.0975, 0.0062, 0.0038, 0.0062);
+const NOSE_TIP = el(0, 0.0365, 0.1105, 0.0082, 0.0082, 0.009);
+const NOSE_WING = el(0.0094, 0.0292, 0.0965, 0.0044, 0.0042, 0.0062);
+const NOSE_BASE = el(0, 0.0275, 0.1025, 0.006, 0.004, 0.0086);
+// A thin upper lip with a clear bow; a fuller lower lip.
+const UPPER_LIP = el(0, 0.0098, 0.0918, 0.016, 0.0052, 0.0098);
+const UPPER_LIP_SIDE = el(0.013, 0.0082, 0.0898, 0.012, 0.0037, 0.0082);
+const CUPIDS_BOW = el(0.0058, 0.0118, 0.0965, 0.0062, 0.0032, 0.0058);
 const PHILTRUM: [V3, V3] = [[0.0042, 0.0225, 0.0965], [0.0052, 0.0138, 0.0995]];
 const LOWER_LIP = el(0, -0.0058, 0.0905, 0.0155, 0.0078, 0.0118);
 const LOWER_LIP_SIDE = el(0.012, -0.0038, 0.0885, 0.011, 0.0055, 0.0095);
 const UNDER_LIP_CREASE = el(0, -0.0182, 0.1, 0.015, 0.0036, 0.0058);
 const EYE_SOCKET = el(E.x, E.y + 0.004, E.z + 0.012, 0.0175, 0.0105, 0.012);
-const TEMPLE = el(0.079, 0.088, 0.045, 0.006, 0.016, 0.016);
+const TEMPLE = el(0.086, 0.088, 0.045, 0.006, 0.016, 0.016);
 
 /** Signed distance from the head's skin (negative inside). */
 export function headSdf(x: number, y: number, z: number): number {
@@ -58,7 +62,7 @@ export function headSdf(x: number, y: number, z: number): number {
   d = smin(d, ellipsoid(ax, y, z, CHIN), 0.012);
 
   // Brow ridge, and the area around the mouth (over the teeth).
-  d = smin(d, ellipsoid(ax, y, z, BROW), 0.012);
+  d = smin(d, ellipsoid(ax, y, z, BROW), 0.016);
   d = smin(d, ellipsoid(ax, y, z, MUZZLE), 0.016);
 
   // Nose (bridge, tip, wings, the base between the nostrils) and lips only matter near the middle of the face.
@@ -83,7 +87,7 @@ export function headSdf(x: number, y: number, z: number): number {
   }
 
   // The eye sockets and the temples.
-  d = ssub(d, ellipsoid(ax, y, z, EYE_SOCKET), 0.007);
+  d = ssub(d, ellipsoid(ax, y, z, EYE_SOCKET), 0.012);
   d = ssub(d, ellipsoid(ax, y, z, TEMPLE), 0.02);
 
   // The skin wraps each eyeball. The almond-shaped opening is left clear down to just behind the

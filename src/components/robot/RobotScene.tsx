@@ -1,6 +1,7 @@
 "use client";
 
-// The reading room: the robot at its desk under a warm lamp, the paper with the sentence, soft shadows.
+// The reading room: the robot at its desk in a bright study (bookshelf, window, plants), under a warm lamp,
+// with the paper with the sentence and soft shadows.
 import { ContactShadows } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useReducedMotion } from "motion/react";
@@ -13,6 +14,8 @@ import { DebugCamera, poseWithTests, useDebugMode, type PoseTest } from "./Debug
 import { Desk } from "./Desk";
 import { Paper, type LineSpot } from "./Paper";
 import { Robot } from "./Robot";
+import { DeskProps } from "./room/DeskProps";
+import { StudyRoom } from "./room/StudyRoom";
 import { CAMERA, COLORS, type CameraView } from "./robotConstants";
 import type { DebugScene } from "./useRobotTimeline";
 
@@ -37,22 +40,6 @@ function CameraRig() {
     state.camera.lookAt(tx, ty, tz);
   });
   return null;
-}
-
-/** Floor and back wall, so the warm lamp light has something to fall on. */
-function Room() {
-  return (
-    <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[12, 12]} />
-        <meshStandardMaterial color={COLORS.floor} roughness={0.95} />
-      </mesh>
-      <mesh position={[0, 2, -1.6]} receiveShadow>
-        <planeGeometry args={[12, 6]} />
-        <meshStandardMaterial color={COLORS.wall} roughness={1} />
-      </mesh>
-    </group>
-  );
 }
 
 function NoWebGl() {
@@ -93,15 +80,17 @@ export default function RobotScene() {
         camera={{ position: [0.95, 1.55, 2.75], fov: CAMERA.fov }}
         fallback={<NoWebGl />}
       >
-        <color attach="background" args={[COLORS.floor]} />
+        <color attach="background" args={[COLORS.wall]} />
         {debug ? <DebugCamera view={view} fpsRef={fpsRef} /> : <CameraRig />}
-        <ambientLight intensity={0.34} />
-        <hemisphereLight args={["#bcc8e6", COLORS.floor, 0.65]} />
+        {/* A bright, warm study: soft room light from above, plus the window light (in StudyRoom). */}
+        <ambientLight intensity={0.5} color="#fff1e0" />
+        <hemisphereLight args={["#fff3e3", COLORS.floor, 0.85]} />
         {/* A cool fill from the camera side keeps the face readable away from the lamp. */}
         <directionalLight position={[2.5, 2.2, 3]} intensity={0.45} color="#c9d6ff" />
-        <Room />
+        <StudyRoom />
         <ContactShadows position={[0, 0.002, 0.1]} scale={[3.2, 2.4]} far={1} blur={2.6} opacity={0.7} resolution={512} frames={1} />
         <Desk />
+        <DeskProps />
         <Paper ref={paper} text={input} onLayout={onLayout} />
         <Robot paper={paper} lines={lines} testPose={testPose} debugScene={debugScene} />
       </Canvas>

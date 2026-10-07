@@ -43,7 +43,6 @@
   color-scheme: dark;
   --header-h: 3.5rem;
   --controls-h: 4.25rem;
-  --sticky-robot-h: clamp(200px, 34vh, 380px);
 }
 
 /* The presenter bar wraps onto two rows on phones. */
@@ -86,8 +85,39 @@ body {
   outline-offset: 3px;
 }
 
+/* Dashes moving along an arrow or flow line: the signal travelling. */
+.flow-dashes {
+  stroke-dasharray: 6 7;
+  animation: flow-dashes 0.9s linear infinite;
+}
+
+@keyframes flow-dashes {
+  to {
+    stroke-dashoffset: -13;
+  }
+}
+
+/* A soft gold ring that grows and fades: "open me next". */
+.attention-pulse {
+  animation: attention-pulse 1.8s ease-out infinite;
+}
+
+@keyframes attention-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.55);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 14px rgba(201, 162, 39, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .flow-dashes,
+  .attention-pulse {
+    animation: none;
   }
 }

@@ -2,7 +2,7 @@
 
 `[x]` = done, `[ ]` = not done yet. Claude ticks each item as soon as it is finished.
 
-**Now:** Phase 7, second review: matching the face, head plates, hands and shoulders to your close-up crops.
+**Now:** All phases are done (0–9). Waiting for your final check.
 
 ---
 
@@ -99,16 +99,45 @@
 - [x] Second review: you sent close-up crops of the reference (face, head panels, hand, shoulder)
 
 **Phase 7 changes from your second review (close-up crops)**
-- [ ] Compare each part with the crops and list the differences
-- [ ] Face: soft low brows, deep-set eyes with lid creases, straight narrow nose, thin upper lip with a clear cupid's bow
-- [ ] Head: raised side plates from the crown down to the ear discs, with seams and screws; the face plate's edge along the jaw
-- [ ] Hands: segmented white plates on the back of the hand, big black rounded knuckle joints, chunkier finger segments
-- [ ] Shoulders: two-piece cap with a seam, black ring bearing and mechanics underneath
-- [ ] Build + lint + screenshots
-- [ ] STOP: you check it in the browser and reply `continue`
+- [x] Compare each part with the crops and list the differences
+- [x] Face: soft low brows, deep-set eyes with lid creases, straight narrow nose, thin upper lip with a clear cupid's bow
+- [x] Head: wider, squarer skull and jaw; raised side plates from the crown down to the ear discs, with seams and screws; the face plate's edge along the jaw
+- [x] Hands: segmented white plates on the back of the hand, big black rounded knuckle joints, chunkier finger segments
+- [x] Shoulders: two-piece cap with a seam, black ring bearing and mechanics underneath
+- [x] Build + lint + screenshots
+- [x] STOP: you checked it ("almost correct") and moved on to the layout
 
-### Phase 8 — Polish and handover
-- [ ] Loading, empty and error states with clear messages
-- [ ] Keyboard (Enter, Space, →, R), focus rings, reduced-motion support
-- [ ] Full `README.md` including "How to connect the real models"
-- [ ] Final build with 0 errors and 0 lint warnings, then STOP
+### Phase 8 — Robot-first stage layout with sliding process screens
+- [x] Stage screen shows only the robot, full screen; "IndicBERT Process" button bottom-left, "VITS Process" button bottom-right
+- [x] Flow line on the robot screen: IndicBERT → VITS → Robot, with the current process clearly marked
+- [x] IndicBERT screen slides in over the whole screen; its 10 steps laid out with clear arrows and animations
+- [x] "Back to robot" button + Esc on both screens (steps first waited for you to open a screen; later changed, as you asked, to run in the background)
+- [x] After step 10 the screen slides back by itself and the packet travels to the VITS button
+- [x] VITS screen slides in from the right; its 8 steps with clear arrows; when done it slides back and the robot speaks
+- [x] Existing panel content unchanged (laptop only: no phone/tablet work, as you asked)
+- [x] Build + lint + screenshots (full run at 1440 px reached "Finished")
+- [x] STOP: you checked it ("fine") and asked for Phase 9
+
+**Phase 8 extra: bright study room behind the robot (from your `study_table_with_robot.png` reference)**
+- [x] Brighter, warmer room: beige walls, oak floor, warmer lights (the old dark navy room is gone)
+- [x] Walnut bookshelf behind the robot with warm lights under each shelf, rows of books, globe, marble bust, small plant, framed photo
+- [x] Left side: bright window, framed picture on the wall, big leafy plant on a low cabinet
+- [x] Black office chair behind the robot
+- [x] Desk: titled book stack (Artificial Intelligence, Robotics, Speech Synthesis, Natural Language Processing), black mug on a coaster, laptop with a voice waveform, pen cup, leather notebook, sticky notes, small plant; black desk lamp
+- [x] Free CC0 models from Poly Haven in `public/models/` (plants, bust, picture frames, about 3 MB); everything else built in code
+- [x] Fixes after the first screenshot: frame glass hidden (it showed black), globe and bust moved into view
+- [x] Rebuild + screenshot to confirm those fixes (photos, globe and bust now show)
+- [x] Chair replaced with a navy leather executive chair like your chair reference (tall back with stitched channels, lumbar band, padded armrests on metal supports)
+- [x] Flow arrows (IndicBERT → VITS, VITS → robot) show only while a signal is travelling, then fade away
+- [x] IndicBERT and VITS steps run in the background after Read aloud (Auto mode), even if you never open their screens; the buttons only open a screen to watch
+- [x] The step row at the top of both screens scrolls by itself to keep the current step in view; a finished screen opens at its last step
+- [x] You check it in the browser
+
+### Phase 9 — Polish and handover
+- [x] Loading, empty and error states with clear messages (new: when a model fails, the robot screen shows the message with Try again and Try another sentence; checked with a backend that doesn't exist)
+- [x] Keyboard (Enter, Space, →, R, Esc), focus rings, reduced-motion support (checked: a full run with reduced motion reaches "Finished")
+- [x] Full `README.md` including "How to connect the real models", the API contract, and screenshots of the main screens (`docs/screenshots/`)
+- [x] `CLAUDE.md` updated (status, new layout, process screens, study room, chair, arrows, background running)
+- [x] Final build with 0 errors and 0 lint warnings
+- [x] Final build with 0 errors and 0 lint warnings
+- [x] STOP: you check the final version
