@@ -167,7 +167,12 @@ export const TtsResponseSchema = z
 // ---------- GET /api/health and error replies ----------
 
 export const HealthResponseSchema = z.object({
+  /** "model" only when both models are real; any sample data makes it "mock". */
   backend: SourceSchema,
+  /** IndicBERT (EMOTION_API_URL) has no sample data, so it is either connected or missing. */
+  emotion: z.enum(["model", "missing"]),
+  /** VITS (TTS_API_URL). */
+  tts: SourceSchema,
 });
 
 export const ApiErrorBodySchema = z.object({

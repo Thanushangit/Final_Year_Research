@@ -12,8 +12,9 @@ pipeline from text to voice.
 
 ![The robot at its desk in the study room, IndicBERT running](docs/screenshots/02-robot.png)
 
-> **Sample data.** The trained models are not connected yet. The app makes realistic sample data with the same JSON
-> shape the real Python backend will return, and every screen that shows sample numbers has a **Sample data** badge.
+> **Models.** IndicBERT always uses the real fine-tuned model through its Python backend (`EMOTION_API_URL`); it has
+> no sample data. VITS is not trained yet, so the app makes realistic sample voice data with the same JSON shape the
+> real backend will return, and the VITS screens show a **Sample data** badge.
 > See [How to connect the real models](#how-to-connect-the-real-models).
 
 ---
@@ -159,30 +160,36 @@ The dashboard never talks to the models directly. The browser calls this app's A
 `/api/tts`). Those routes either make sample data or forward the request to your Python backend:
 
 ```
-Browser ──► /api/emotion ──► sample data             (MODEL_API_URL not set)
-                         └─► ${MODEL_API_URL}/emotion (MODEL_API_URL set)
-Browser ──► /api/tts     ──► sample data
-                         └─► ${MODEL_API_URL}/tts
+Browser ──► /api/emotion ──► ${EMOTION_API_URL}/emotion (required; not set = error, no sample data)
+Browser ──► /api/tts     ──► sample data               (TTS_API_URL not set)
+                         └─► ${TTS_API_URL}/tts         (TTS_API_URL set)
 ```
+
+Each model has its own URL, so IndicBERT and VITS can run on different servers (or the same one).
 
 ### Steps
 
-1. **Build a small Python server** (for example FastAPI) with two endpoints:
-   - `POST /emotion`
-   - `POST /tts`
+1. **Build a small Python server** (for example FastAPI) for each model, or one server with both endpoints:
+   - `POST /emotion` (IndicBERT)
+   - `POST /tts` (VITS)
 
    Each takes and returns JSON exactly as in the [API contract](#api-contract) below.
-2. **Point the dashboard at it.** Copy `.env.example` to `.env.local` and set:
+2. **Point the dashboard at it.** Copy `.env.example` to `.env.local` and set the base URL of each server
+   (`EMOTION_API_URL` is required; leave `TTS_API_URL` empty to keep sample voice data):
 
    ```bash
-   MODEL_API_URL=http://localhost:8000
+   EMOTION_API_URL=http://localhost:8000
+   TTS_API_URL=http://localhost:8001
    ```
 
 3. **Restart** `npm run dev` (or rebuild for `npm run start`).
 
-   The **Sample data** badges disappear: a reply without `"source"` counts as `"model"`.
+   The VITS **Sample data** badge disappears when VITS is connected: a reply without `"source"` counts as
+   `"model"`. The header badge disappears only when both models are connected.
 
-You can check which one is active with `GET /api/health`, which returns `{"backend":"mock"}` or `{"backend":"model"}`.
+You can check what is connected with `GET /api/health`, for example
+`{"backend":"mock","emotion":"model","tts":"mock"}`. `emotion` is `"model"` or `"missing"` (URL not set); `backend`
+is `"model"` only when both models are real.
 
 **If the backend fails**, the dashboard returns HTTP 502 and shows a clear message on the robot screen with **Try
 again** and **Try another sentence**. This happens when:
@@ -393,7 +400,9 @@ Add `?debug=1` to the URL for the robot's debug tools (camera angles, FPS meter,
 | --- | --- |
 | "The 3D robot needs WebGL…" | Turn on hardware acceleration in the browser settings. The rest of the demo still works. |
 | No sound | Browsers can block sound that starts by itself. Click **Play voice** (it pulses when this happens). |
-| "The emotion model did not respond…" | The Python backend isn't running or `MODEL_API_URL` is wrong. Start it, or remove `MODEL_API_URL` to use sample data. |
+| "The emotion model is not connected…" | `EMOTION_API_URL` is empty or missing in `.env.local`. Set it to the IndicBERT backend address. |
+| "The emotion model did not respond…" | The IndicBERT backend isn't running or `EMOTION_API_URL` is wrong. Start the backend first, then try again. |
+| "The speech model did not respond…" | The VITS backend isn't running or `TTS_API_URL` is wrong. Start it, or remove `TTS_API_URL` to use sample data. |
 | "…not in the agreed JSON shape" | Compare the backend reply with the [API contract](#api-contract); the message lists the wrong fields. |
 | The robot moves slowly | Check the FPS with `?debug=1`. Use the production build and a laptop with a graphics card. |
 

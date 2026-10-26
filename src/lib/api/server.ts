@@ -43,7 +43,7 @@ export async function proxyToModel<Schema extends z.ZodType>(
   schema: Schema,
   failureMessage: string,
 ): Promise<NextResponse> {
-  const url = `${getModelApiUrl()}/${endpoint}`;
+  const url = `${getModelApiUrl(endpoint)}/${endpoint}`;
   const fail = (detail: string) => errorResponse(502, "BACKEND_ERROR", failureMessage, [{ path: url, message: detail }]);
 
   let reply: Response;

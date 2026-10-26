@@ -60,8 +60,12 @@ Pipeline (source of truth, do not change):
    embedding and conditions the text encoder, duration predictor and decoder.
 5. VITS outputs a waveform. A 3D robot speaks it with lip-sync.
 
-Models are not ready. Next.js API routes return mock data with the same JSON shape as the future Python backend.
-Setting `MODEL_API_URL` makes the routes proxy to `${MODEL_API_URL}/emotion` and `/tts` instead.
+Two separate env variables (user's change, 2026-10-26): `EMOTION_API_URL` makes `/api/emotion` proxy to
+`${EMOTION_API_URL}/emotion` (IndicBERT, backend in `Desktop\Research_Indic_Bert_model`). **IndicBERT has no mock
+(user's decision):** `emotionMock.ts` was deleted, and without the URL `/api/emotion` answers 503 `BACKEND_NOT_SET`.
+`TTS_API_URL` makes `/api/tts` proxy to `${TTS_API_URL}/tts`; empty = VITS mock data (VITS not built yet).
+`/api/health` returns `{backend, emotion: "model"|"missing", tts: "mock"|"model"}`; `backend` is "model" only when
+both are real (it drives the header badge).
 Every screen that shows mock values shows a "Sample data" badge. It disappears when `source === "model"`.
 
 ## Agreed corrections to the brief (approved by the user)
@@ -285,7 +289,7 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
 - **Audio** `lib/audio/audioEngine.ts`: `unlock()` inside the Read aloud click, `load(base64Wav)`, `playFromStart()`
   (false if blocked → `voiceBlocked`), `stop()`, getters `media`, `analyserNode` (fftSize 1024), `voiceSource`.
 - **Mocks** `lib/mock/`: `tamilText` (graphemes, `groupIntoLetters`, `normalizeTamilText` incl. Tamil number words,
-  `toModelSymbols` with pause hints, `describeChar`), `seeded`, `presets` (`PRESETS`, `findPreset`), `emotionMock`
+  `toModelSymbols` with pause hints, `describeChar`), `seeded`, `presets` (`PRESETS`, `findPreset`), (`emotionMock` deleted 2026-10-26: IndicBERT is real-only)
   (WordPiece pieces, emotion cue stems, attention with [CLS] looking at cue words, CLS vector), `ttsMock` (prosody =
   probability-weighted emotion settings + speaker, durations, alignment ≤ 400 columns, embeddings, optional
   `public/mock-audio/SPK0x.wav`), `wavEncoder` (formant speech synth, `encodeWav`, `decodeWav`), `spectrogram`
