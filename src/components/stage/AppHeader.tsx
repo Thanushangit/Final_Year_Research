@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { SampleDataBadge } from "@/components/ui/SampleDataBadge";
+import { LiveBadge } from "@/components/ui/LiveBadge";
 import { cn } from "@/lib/cn";
 import { usePipelineStore } from "@/store/pipelineStore";
 
@@ -19,7 +19,7 @@ export function AppHeader() {
       </div>
       <div className="flex items-center gap-3">
         {/* On phones the panels carry their own badges, so the header keeps room for the button. */}
-        {backend === "mock" && <SampleDataBadge className={cn(onStage && "hidden md:inline-flex")} />}
+        {backend === "model" && <LiveBadge className={cn(onStage && "hidden md:inline-flex")} />}
         {onStage && (
           <Button size="sm" onClick={reset} className="md:hidden">
             Try another sentence

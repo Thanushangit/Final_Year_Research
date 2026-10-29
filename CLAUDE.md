@@ -64,9 +64,13 @@ Two separate env variables (user's change, 2026-10-26): `EMOTION_API_URL` makes 
 `${EMOTION_API_URL}/emotion` (IndicBERT, backend in `Desktop\Research_Indic_Bert_model`). **IndicBERT has no mock
 (user's decision):** `emotionMock.ts` was deleted, and without the URL `/api/emotion` answers 503 `BACKEND_NOT_SET`.
 `TTS_API_URL` makes `/api/tts` proxy to `${TTS_API_URL}/tts`; empty = VITS mock data (VITS not built yet).
+Optional `EMOTION_API_TOKEN` / `TTS_API_TOKEN` (2026-10-29) are sent as `Authorization: Bearer <token>`; the IndicBERT
+backend on the VPS (`https://indic-bert.fot-research.tech`) requires it, the local one does not.
 `/api/health` returns `{backend, emotion: "model"|"missing", tts: "mock"|"model"}`; `backend` is "model" only when
 both are real (it drives the header badge).
-Every screen that shows mock values shows a "Sample data" badge. It disappears when `source === "model"`.
+The "Sample data" badge was removed (user's change, 2026-10-29). `ui/LiveBadge.tsx` ("Live" + pulsing gold dot,
+which stays still under reduced motion) shows in the header when `backend === "model"` and on a process screen when its
+`source === "model"`; mock data shows no badge.
 
 ## Agreed corrections to the brief (approved by the user)
 - **Versions:** TypeScript 5.9 and ESLint 9 (not TS 7 / ESLint 10), because typescript-eslint supports TS < 6.1 and
@@ -148,7 +152,7 @@ Every screen that shows mock values shows a "Sample data" badge. It disappears w
 - **PresenterControls**: Auto/Step, Next step (Space / →), speed 0.5×/1×/2×, Replay (R), Try another sentence
   (in the header below 768px). Keys are ignored while typing. Status line is `aria-live`, shown from 1024px.
 - **UI kit** `components/ui/`: `Button` (primary / secondary / secondaryLight), `SegmentedControl` (native radios),
-  `SampleDataBadge` (dark / light), `StepCard` + `stepStatus()` (pending / waiting / active / done; the active card
+  `LiveBadge` (dark / light), `StepCard` + `stepStatus()` (pending / waiting / active / done; the active card
   scrolls to the middle of its row (skipped while the screen is inert); props `id`, `arrow`; optional `detail` = "What
   the model does" note, `aside` = model time), `LabPanel` (the sliding process screen, see "Process screens"),
   `PanelError` (Try again → `retry`).

@@ -7,7 +7,7 @@ import type { DataSource } from "@/lib/api/contracts";
 import { cn } from "@/lib/cn";
 import { usePipelineStore } from "@/store/pipelineStore";
 import type { PanelId } from "@/types";
-import { SampleDataBadge } from "./SampleDataBadge";
+import { LiveBadge } from "./LiveBadge";
 import { scrollToStep } from "./StepCard";
 
 interface LabPanelProps {
@@ -15,7 +15,7 @@ interface LabPanelProps {
   title: string;
   model: string;
   intro: string;
-  /** Where this screen's numbers came from; shows the "Sample data" badge for mock data. */
+  /** Where this screen's numbers came from; shows the "Live" badge when the real model answered. */
   source?: DataSource;
   /** Step titles, for the overview row. */
   steps: readonly { title: string }[];
@@ -151,7 +151,7 @@ export function LabPanel({ id, title, model, intro, source, steps, current, chil
         <p className="ml-auto text-sm text-slate tabular-nums sm:ml-0">
           {current >= total ? "All steps done" : `Step ${current + 1} of ${total}`}
         </p>
-        {source === "mock" && <SampleDataBadge tone="light" />}
+        {source === "model" && <LiveBadge tone="light" />}
       </header>
       <StepOverview id={id} steps={steps} current={current} open={open} />
       {/* The cards in one row. The padding lets the first and last card sit in the middle too. */}

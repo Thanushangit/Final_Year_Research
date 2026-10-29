@@ -2,7 +2,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import type { z } from "zod";
-import { BACKEND_TIMEOUT_MS, getModelApiUrl } from "@/lib/config";
+import { BACKEND_TIMEOUT_MS, getModelApiToken, getModelApiUrl } from "@/lib/config";
 import type { ApiErrorBody } from "./contracts";
 
 type Issues = NonNullable<ApiErrorBody["error"]["issues"]>;
@@ -44,13 +44,18 @@ export async function proxyToModel<Schema extends z.ZodType>(
   failureMessage: string,
 ): Promise<NextResponse> {
   const url = `${getModelApiUrl(endpoint)}/${endpoint}`;
+  const token = getModelApiToken(endpoint);
   const fail = (detail: string) => errorResponse(502, "BACKEND_ERROR", failureMessage, [{ path: url, message: detail }]);
 
   let reply: Response;
   try {
     reply = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
       cache: "no-store",

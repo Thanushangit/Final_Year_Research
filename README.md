@@ -14,7 +14,7 @@ pipeline from text to voice.
 
 > **Models.** IndicBERT always uses the real fine-tuned model through its Python backend (`EMOTION_API_URL`); it has
 > no sample data. VITS is not trained yet, so the app makes realistic sample voice data with the same JSON shape the
-> real backend will return, and the VITS screens show a **Sample data** badge.
+> real backend will return. Screens whose numbers come from a real model show a pulsing **Live** badge.
 > See [How to connect the real models](#how-to-connect-the-real-models).
 
 ---
@@ -184,8 +184,8 @@ Each model has its own URL, so IndicBERT and VITS can run on different servers (
 
 3. **Restart** `npm run dev` (or rebuild for `npm run start`).
 
-   The VITS **Sample data** badge disappears when VITS is connected: a reply without `"source"` counts as
-   `"model"`. The header badge disappears only when both models are connected.
+   The VITS screen shows the **Live** badge once VITS is connected: a reply without `"source"` counts as
+   `"model"`. The header shows **Live** only when both models are connected.
 
 You can check what is connected with `GET /api/health`, for example
 `{"backend":"mock","emotion":"model","tts":"mock"}`. `emotion` is `"model"` or `"missing"` (URL not set); `backend`

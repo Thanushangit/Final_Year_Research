@@ -13,6 +13,13 @@ export function getModelApiUrl(endpoint: ModelEndpoint): string | null {
   return raw ? raw.replace(/\/+$/, "") : null;
 }
 
+const TOKEN_VARIABLE: Record<ModelEndpoint, string> = { emotion: "EMOTION_API_TOKEN", tts: "TTS_API_TOKEN" };
+
+/** The secret token the backend expects as "Authorization: Bearer <token>", or null when it needs none (local). */
+export function getModelApiToken(endpoint: ModelEndpoint): string | null {
+  return process.env[TOKEN_VARIABLE[endpoint]]?.trim() || null;
+}
+
 export function getBackendMode(endpoint: ModelEndpoint): DataSource {
   return getModelApiUrl(endpoint) ? "model" : "mock";
 }
