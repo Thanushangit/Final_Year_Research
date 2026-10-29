@@ -38,7 +38,12 @@ export function StageLayout() {
     <MotionConfig reducedMotion="user">
       <div className="flex min-h-dvh flex-col">
         <AppHeader />
-        <main ref={mainRef} className={cn("relative grid w-full", onStage ? STAGE_GRID : INPUT_GRID)}>
+        {/* minmax(0, 1fr): the column never grows to fit the 3D canvas. Back from the stage, the canvas still
+            had the stage's pixel width, the column grew to fit it, and the input screen got wider than the window. */}
+        <main
+          ref={mainRef}
+          className={cn("relative grid w-full grid-cols-[minmax(0,1fr)]", onStage ? STAGE_GRID : INPUT_GRID)}
+        >
           {/* Always the first child, so React keeps the same 3D canvas on both screens. */}
           <RobotFrame mode={onStage ? "stage" : "input"} />
           <AnimatePresence>{!onStage && <InputForm key="input" />}</AnimatePresence>

@@ -6,7 +6,8 @@ import { cn } from "@/lib/cn";
 import { usePipelineStore } from "@/store/pipelineStore";
 
 export function AppHeader() {
-  const backend = usePipelineStore((s) => s.backend);
+  // IndicBERT always runs on the real model, so the header is live once it is connected.
+  const live = usePipelineStore((s) => s.health?.emotion === "model");
   const stage = usePipelineStore((s) => s.stage);
   const reset = usePipelineStore((s) => s.reset);
   const onStage = stage !== "idle";
@@ -19,7 +20,7 @@ export function AppHeader() {
       </div>
       <div className="flex items-center gap-3">
         {/* On phones the panels carry their own badges, so the header keeps room for the button. */}
-        {backend === "model" && <LiveBadge className={cn(onStage && "hidden md:inline-flex")} />}
+        {live && <LiveBadge className={cn(onStage && "hidden md:inline-flex")} />}
         {onStage && (
           <Button size="sm" onClick={reset} className="md:hidden">
             Try another sentence

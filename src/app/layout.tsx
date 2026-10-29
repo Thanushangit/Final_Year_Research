@@ -16,10 +16,29 @@ const hindMadurai = Hind_Madurai({
   display: "swap",
 });
 
+const TITLE = "Reading Room · Emotion-aware Tamil speech";
+const DESCRIPTION =
+  "Demo of an emotion-aware Sri Lankan Tamil text-to-speech pipeline: IndicBERT predicts the feeling, VITS speaks with it.";
+
+// The share image comes from app/opengraph-image.png and app/twitter-image.png; metadataBase makes its link absolute.
 export const metadata: Metadata = {
-  title: "Reading Room · Emotion-aware Tamil speech",
-  description:
-    "Demo of an emotion-aware Sri Lankan Tamil text-to-speech pipeline: IndicBERT predicts the feeling, VITS speaks with it.",
+  metadataBase: new URL("https://www.fot-research.tech"),
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "Reading Room",
+    title: TITLE,
+    description: DESCRIPTION,
+    locale: "en_GB",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {

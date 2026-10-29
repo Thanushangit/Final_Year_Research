@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { SceneLoader } from "@/components/robot/SceneLoader";
 import { cn } from "@/lib/cn";
 import { usePipelineStore } from "@/store/pipelineStore";
 import type { Stage } from "@/types";
@@ -8,7 +9,7 @@ import type { Stage } from "@/types";
 // three.js only runs in the browser, so the scene is loaded on the client.
 const RobotScene = dynamic(() => import("@/components/robot/RobotScene"), {
   ssr: false,
-  loading: () => <p className="flex h-full items-center justify-center text-sm text-haze">Setting up the reading room…</p>,
+  loading: () => <SceneLoader />,
 });
 
 const STATUS: Record<Stage, string> = {
@@ -28,7 +29,7 @@ const STATUS: Record<Stage, string> = {
 export function RobotFrame({ mode }: { mode: "input" | "stage" }) {
   const stage = usePipelineStore((s) => s.stage);
   return (
-    <div className={cn("min-h-0 [grid-area:robot]", mode === "stage" && "h-full")}>
+    <div className={cn("min-h-0 min-w-0 [grid-area:robot]", mode === "stage" && "h-full")}>
       <div
         data-anchor="robot"
         role="img"

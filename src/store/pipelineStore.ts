@@ -3,8 +3,8 @@ import { create } from "zustand";
 import { ApiRequestError, getHealth, isAbortError, predictEmotion, synthesizeSpeech } from "@/lib/api/client";
 import {
   TamilTextSchema,
-  type DataSource,
   type EmotionResponse,
+  type HealthResponse,
   type SpeakerId,
   type TtsResponse,
 } from "@/lib/api/contracts";
@@ -45,8 +45,8 @@ interface PipelineState {
   pendingNext: boolean;
   /** The browser refused to start the sound by itself; the user has to press "Play voice". */
   voiceBlocked: boolean;
-  /** "mock" or "model", from /api/health; null until known. */
-  backend: DataSource | null;
+  /** Which models are real, from /api/health; null until known. */
+  health: HealthResponse | null;
   /** The 3D robot is on screen (false without WebGL), so the voice waits for it to look up. */
   robotOnline: boolean;
   /** The speakRequest the robot is ready for (it has looked up and breathed in). */
@@ -148,7 +148,7 @@ export const usePipelineStore = create<PipelineStore>()((set, get) => {
     speakRequest: 0,
     pendingNext: false,
     voiceBlocked: false,
-    backend: null,
+    health: null,
     robotOnline: false,
     robotReadyFor: 0,
 
@@ -160,10 +160,9 @@ export const usePipelineStore = create<PipelineStore>()((set, get) => {
 
     loadBackend: async () => {
       try {
-        const { backend } = await getHealth();
-        set({ backend });
+        set({ health: await getHealth() });
       } catch {
-        set({ backend: null });
+        set({ health: null });
       }
     },
 

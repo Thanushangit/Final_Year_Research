@@ -17,7 +17,9 @@ import { Robot } from "./Robot";
 import { DeskProps } from "./room/DeskProps";
 import { StudyRoom } from "./room/StudyRoom";
 import { CAMERA, COLORS, type CameraView } from "./robotConstants";
+import { SceneLoader } from "./SceneLoader";
 import type { DebugScene } from "./useRobotTimeline";
+import { useSceneReady } from "./useSceneReady";
 
 // 2 × tan(fov / 2): how wide the view is at 1 m from the camera.
 const VIEW_WIDTH_PER_METRE = 2 * Math.tan(((CAMERA.fov / 2) * Math.PI) / 180);
@@ -44,7 +46,8 @@ function CameraRig() {
 
 function NoWebGl() {
   return (
-    <p className="flex h-full items-center justify-center p-6 text-center text-sm text-haze">
+    // Above the loading cover, which would otherwise wait for a canvas that never comes.
+    <p className="relative z-20 flex h-full items-center justify-center bg-ink p-6 text-center text-sm text-haze">
       The 3D robot needs WebGL, which this browser has turned off. The rest of the demo still works.
     </p>
   );
@@ -56,6 +59,8 @@ export default function RobotScene() {
   const [view, setView] = useState<CameraView>("threeQuarter");
   const [tests, setTests] = useState<ReadonlySet<PoseTest>>(() => new Set());
   const [debugScene, setDebugScene] = useState<DebugScene | null>(null);
+  const [created, setCreated] = useState(false);
+  const { ready, progress } = useSceneReady(created);
   const fpsRef = useRef<HTMLSpanElement>(null);
   const paper = useRef<Group>(null);
   const lines = useRef<LineSpot[]>([]);
@@ -79,6 +84,7 @@ export default function RobotScene() {
         dpr={[1, 2]}
         camera={{ position: [0.95, 1.55, 2.75], fov: CAMERA.fov }}
         fallback={<NoWebGl />}
+        onCreated={() => setCreated(true)}
       >
         <color attach="background" args={[COLORS.wall]} />
         {debug ? <DebugCamera view={view} fpsRef={fpsRef} /> : <CameraRig />}
@@ -88,12 +94,23 @@ export default function RobotScene() {
         {/* A cool fill from the camera side keeps the face readable away from the lamp. */}
         <directionalLight position={[2.5, 2.2, 3]} intensity={0.45} color="#c9d6ff" />
         <StudyRoom />
-        <ContactShadows position={[0, 0.002, 0.1]} scale={[3.2, 2.4]} far={1} blur={2.6} opacity={0.7} resolution={512} frames={1} />
+        {/* Baked once, and again when the room is ready, so the loaded models are in the shadow too. */}
+        <ContactShadows
+          key={ready ? "ready" : "loading"}
+          position={[0, 0.002, 0.1]}
+          scale={[3.2, 2.4]}
+          far={1}
+          blur={2.6}
+          opacity={0.7}
+          resolution={512}
+          frames={1}
+        />
         <Desk />
         <DeskProps />
         <Paper ref={paper} text={input} onLayout={onLayout} />
         <Robot paper={paper} lines={lines} testPose={testPose} debugScene={debugScene} />
       </Canvas>
+      <SceneLoader progress={progress} hidden={ready} />
       {debug && (
         <DebugPanel view={view} onView={setView} tests={tests} onToggle={toggle} onScene={act} fpsRef={fpsRef} />
       )}

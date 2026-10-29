@@ -7,10 +7,23 @@ export type ModelEndpoint = "emotion" | "tts";
 
 const URL_VARIABLE: Record<ModelEndpoint, string> = { emotion: "EMOTION_API_URL", tts: "TTS_API_URL" };
 
-/** The base URL of the backend for one endpoint, without a trailing slash, or null to use sample data. */
+const warned = new Set<string>();
+
+/**
+ * The base URL of the backend for one endpoint, without a trailing slash, or null to use sample data.
+ * A value that is not an http(s) address (a placeholder like "you type here") counts as not set.
+ */
 export function getModelApiUrl(endpoint: ModelEndpoint): string | null {
   const raw = process.env[URL_VARIABLE[endpoint]]?.trim();
-  return raw ? raw.replace(/\/+$/, "") : null;
+  if (!raw) return null;
+  if (!/^https?:\/\/[^\s/]+/i.test(raw) || !URL.canParse(raw)) {
+    if (!warned.has(raw)) {
+      warned.add(raw);
+      console.warn(`${URL_VARIABLE[endpoint]} is not an http(s) address, so it is ignored: "${raw}"`);
+    }
+    return null;
+  }
+  return raw.replace(/\/+$/, "");
 }
 
 const TOKEN_VARIABLE: Record<ModelEndpoint, string> = { emotion: "EMOTION_API_TOKEN", tts: "TTS_API_TOKEN" };

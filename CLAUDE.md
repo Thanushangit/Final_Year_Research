@@ -63,14 +63,19 @@ Pipeline (source of truth, do not change):
 Two separate env variables (user's change, 2026-10-26): `EMOTION_API_URL` makes `/api/emotion` proxy to
 `${EMOTION_API_URL}/emotion` (IndicBERT, backend in `Desktop\Research_Indic_Bert_model`). **IndicBERT has no mock
 (user's decision):** `emotionMock.ts` was deleted, and without the URL `/api/emotion` answers 503 `BACKEND_NOT_SET`.
-`TTS_API_URL` makes `/api/tts` proxy to `${TTS_API_URL}/tts`; empty = VITS mock data (VITS not built yet).
+`TTS_API_URL` makes `/api/tts` proxy to `${TTS_API_URL}/tts`; empty = VITS mock data (VITS not built yet). A value
+that is not an http(s) address (placeholder text like "you type here") counts as empty (`getModelApiUrl`, warns once).
 Optional `EMOTION_API_TOKEN` / `TTS_API_TOKEN` (2026-10-29) are sent as `Authorization: Bearer <token>`; the IndicBERT
 backend on the VPS (`https://indic-bert.fot-research.tech`) requires it, the local one does not.
 `/api/health` returns `{backend, emotion: "model"|"missing", tts: "mock"|"model"}`; `backend` is "model" only when
 both are real (it drives the header badge).
 The "Sample data" badge was removed (user's change, 2026-10-29). `ui/LiveBadge.tsx` ("Live" + pulsing gold dot,
-which stays still under reduced motion) shows in the header when `backend === "model"` and on a process screen when its
+which stays still under reduced motion) shows in the header when IndicBERT is connected (store `health.emotion ===
+"model"`; the store keeps the whole `/api/health` reply as `health`) and on a process screen when its
 `source === "model"`; mock data shows no badge.
+Share image (2026-10-29): static `src/app/opengraph-image.png` + `twitter-image.png` (1200×630, rendered once with a
+playwright script from a crop of `docs/screenshots/02-robot.png`; the script was not kept) with `*.alt.txt` (no trailing newline); `layout.tsx` sets
+`metadataBase` https://www.fot-research.tech, `openGraph` and a `summary_large_image` Twitter card.
 
 ## Agreed corrections to the brief (approved by the user)
 - **Versions:** TypeScript 5.9 and ESLint 9 (not TS 7 / ESLint 10), because typescript-eslint supports TS < 6.1 and
@@ -197,6 +202,12 @@ which stays still under reduced motion) shows in the header when `backend === "m
   its own `Suspense`). Positions/colours in `STUDY` and `COLORS` (`robotConstants.ts`). Models were packed with
   glTF-Transform (`optimize --texture-compress webp --texture-size 512`) in the scratchpad. Only desk things cast shadows.
   Lights: ambient 0.5 warm, hemisphere 0.85, cool camera fill, window light, lamp spot + point, shelf point.
+- **Scene loading (2026-10-29):** `robot/SceneLoader.tsx` covers the room (spinner + %) until `useSceneReady`
+  says the .glb models are loaded (drei `useProgress`), the head skin is built and the canvas exists (+250 ms; at
+  most 25 s); it also stands in as the dynamic-import fallback. `ContactShadows` re-bakes once ready (keyed).
+  `Model` wraps each .glb in `RetryOnError` (clears the useGLTF cache, 3 retries) + its own `Suspense`; the head
+  worker falls back to the main thread after 15 s. `main` uses `grid-cols-[minmax(0,1fr)]` and `RobotFrame` has
+  `min-w-0`: without them the stage-wide canvas made the input screen scroll sideways after "Try another sentence".
 - **Robot scene**: `components/stage/RobotFrame.tsx` (frame + status caption, dynamic import with `ssr: false`) →
   `components/robot/RobotScene.tsx` (Canvas, lights, `StudyRoom`, baked `ContactShadows` under the desk, `CameraRig`:
   three-quarter view, steps back on narrow frames; `?debug=1` swaps it for `DebugCamera` + `DebugPanel`).

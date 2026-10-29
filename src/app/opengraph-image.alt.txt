@@ -1,0 +1,1 @@
+Reading Room: a white android robot reads a Tamil sentence at its desk in a warm study. The pipeline runs IndicBERT, then VITS, then the robot speaks.
